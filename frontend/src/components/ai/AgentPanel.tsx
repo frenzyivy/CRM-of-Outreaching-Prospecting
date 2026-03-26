@@ -15,7 +15,7 @@ type AgentAction = 'cold_email' | 'follow_up_1' | 'follow_up_2' | 'freeform'
 interface Props {
   leadId: string
   leadName: string
-  leadEmail: string
+  leadEmail?: string
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -38,7 +38,7 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-export default function AgentPanel({ leadId, leadName, leadEmail }: Props) {
+export default function AgentPanel({ leadId, leadName }: Props) {
   const { data: status } = useAgentStatus()
   const draftEmail = useDraftEmail()
   const draftFollowUp = useDraftFollowUp()
@@ -48,6 +48,7 @@ export default function AgentPanel({ leadId, leadName, leadEmail }: Props) {
   const [freeformPrompt, setFreeformPrompt] = useState('')
   const [activeAction, setActiveAction] = useState<AgentAction | null>(null)
   const [showActions, setShowActions] = useState(true)
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined)
 
   const isLoading = draftEmail.isPending || draftFollowUp.isPending || freeform.isPending
   const result = draftEmail.data || draftFollowUp.data || freeform.data
@@ -63,11 +64,11 @@ export default function AgentPanel({ leadId, leadName, leadEmail }: Props) {
     freeform.reset()
 
     if (action === 'cold_email') {
-      draftEmail.mutate({ lead_id: leadId, custom_instructions: customInstructions })
+      draftEmail.mutate({ lead_id: leadId, custom_instructions: customInstructions, model: selectedModel })
     } else if (action === 'follow_up_1') {
-      draftFollowUp.mutate({ lead_id: leadId, follow_up_number: 1, custom_instructions: customInstructions })
+      draftFollowUp.mutate({ lead_id: leadId, follow_up_number: 1, custom_instructions: customInstructions, model: selectedModel })
     } else if (action === 'follow_up_2') {
-      draftFollowUp.mutate({ lead_id: leadId, follow_up_number: 2, custom_instructions: customInstructions })
+      draftFollowUp.mutate({ lead_id: leadId, follow_up_number: 2, custom_instructions: customInstructions, model: selectedModel })
     }
   }
 
@@ -80,7 +81,7 @@ export default function AgentPanel({ leadId, leadName, leadEmail }: Props) {
     draftFollowUp.reset()
     freeform.reset()
 
-    freeform.mutate({ prompt: freeformPrompt, lead_id: leadId })
+    freeform.mutate({ prompt: freeformPrompt, lead_id: leadId, model: selectedModel })
   }
 
   const handleReset = () => {
@@ -123,20 +124,29 @@ export default function AgentPanel({ leadId, leadName, leadEmail }: Props) {
             </div>
             <div>
               <h4 className="text-sm font-semibold text-slate-900">AI Agent</h4>
-              <p className="text-[10px] text-slate-400">
-                {status.provider === 'openai' ? 'OpenAI' : 'Claude'} &middot; {leadName}
-              </p>
+              <p className="text-[10px] text-slate-400">{leadName}</p>
             </div>
           </div>
-          {activeAction && (
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+          <div className="flex items-center gap-1.5">
+            <select
+              value={selectedModel || status.model}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="text-[11px] border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
             >
-              <RefreshCw size={12} />
-              New
-            </button>
-          )}
+              {(status.available_models || []).map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            {activeAction && (
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <RefreshCw size={12} />
+                New
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
