@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DollarSign, Wrench, Cpu, TrendingUp, TrendingDown,
-  Plus, Trash2, X,
+  Plus, Trash2,
 } from 'lucide-react'
 import Header from '../layout/Header'
 import api from '../../api/client'

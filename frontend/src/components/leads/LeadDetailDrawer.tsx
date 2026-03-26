@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Mail, Phone, StickyNote, Building2,
-  Globe, Share2, MapPin, Briefcase, ExternalLink, Send, Eye, MousePointer, Reply,
-  Calendar, Tag, User, MoreVertical
+  Globe, Share2, MapPin, ExternalLink, Send, Eye, MousePointer, Reply,
+  Calendar, Tag, MoreVertical
 } from 'lucide-react'
 import { useLeadDetail } from '../../hooks/useLeads'
 import { useUpdateStage, useLogActivity } from '../../hooks/usePipeline'

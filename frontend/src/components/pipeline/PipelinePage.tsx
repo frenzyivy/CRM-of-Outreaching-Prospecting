@@ -44,7 +44,7 @@ function PipelineBoard({
     const result: Record<string, Lead[]> = {}
     for (const stage of pipeline.stage_order) {
       result[stage] = (pipeline.stages[stage] ?? []).filter((lead) => {
-        const raw = lead as Record<string, unknown>
+        const raw = lead as unknown as Record<string, unknown>
         const name = lead.lead_type === 'company'
           ? (raw.company_name as string) ?? ''
           : (raw.full_name as string) || [raw.first_name, raw.last_name].filter(Boolean).join(' ') || ''

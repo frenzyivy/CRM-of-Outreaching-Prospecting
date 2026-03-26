@@ -9,6 +9,8 @@ export interface Company {
   website: string
   phone: string
   notes: string
+  size?: string
+  location?: string
   stage: string
   stage_label: string
   created_at?: string
@@ -24,6 +26,7 @@ export interface Contact {
   email: string
   phone: string
   company_name: string
+  company?: string
   linkedin: string
   notes: string
   city: string

@@ -1,5 +1,5 @@
 import { Building2, User, MapPin, Briefcase, Phone, Mail, Globe, Calendar, ExternalLink, Tag } from 'lucide-react'
-import type { Lead, Company, Contact, LeadRecord } from '../../types'
+import type { Lead, Company } from '../../types'
 import type { CompanyField, LeadField } from './fieldConfig'
 
 const stageTagColors: Record<string, string> = {
@@ -110,7 +110,7 @@ export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFie
   // ── Person card (contact or lead) ─────────────────────────────────────────
   // Both types share similar fields but use different column names in the DB.
   // Normalise to a common shape so the card works for either.
-  const raw = lead as Record<string, unknown>
+  const raw = lead as unknown as Record<string, unknown>
   const show = (f: LeadField) => !visibleLeadFields || visibleLeadFields.has(f)
 
   const fullName =

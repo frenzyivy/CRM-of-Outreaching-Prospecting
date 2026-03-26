@@ -12,17 +12,6 @@ interface WhatsAppAnalytics {
   conversations: number
 }
 
-interface WhatsAppMessage {
-  id: string
-  lead_id: string | null
-  phone: string
-  direction: 'inbound' | 'outbound'
-  content: string
-  status: string
-  wa_message_id: string
-  created_at: string
-}
-
 export default function WhatsAppPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()

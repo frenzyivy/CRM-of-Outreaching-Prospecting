@@ -255,7 +255,7 @@ export default function SyncTab() {
                           className="rounded border-slate-300"
                         />
                       ) : (
-                        <AlertTriangle size={14} className="text-red-400" title="Invalid email" />
+                        <AlertTriangle size={14} className="text-red-400" />
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-slate-800 font-medium whitespace-nowrap">
