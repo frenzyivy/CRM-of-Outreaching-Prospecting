@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Mail, Phone, StickyNote, Building2,
   Globe, Share2, ExternalLink, Send, Eye, MousePointer, Reply,
-  Calendar, Tag, MoreVertical
+  Calendar, Tag, MoreVertical, Sparkles
 } from 'lucide-react'
 import { useLeadDetail } from '../../hooks/useLeads'
 import { useUpdateStage, useLogActivity } from '../../hooks/usePipeline'
 import Badge from '../common/Badge'
 import LeadScoreBadge from '../common/LeadScoreBadge'
+import AgentPanel from '../ai/AgentPanel'
 import { formatDateTime } from '../../lib/utils'
 import type { LeadRecord, Activity } from '../../types'
 
@@ -39,7 +40,7 @@ const activityColors: Record<string, string> = {
   stage_change: 'text-purple-500 bg-purple-50',
 }
 
-type Tab = 'activities' | 'emails' | 'company' | 'details'
+type Tab = 'activities' | 'emails' | 'company' | 'details' | 'ai'
 
 interface Props {
   lead: LeadRecord
@@ -158,11 +159,12 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate }: Props) {
     replied: 0,
   }
 
-  const tabs: { key: Tab; label: string; count?: number }[] = [
+  const tabs: { key: Tab; label: string; count?: number; icon?: typeof Mail }[] = [
     { key: 'activities', label: 'Activities', count: activities.length },
     { key: 'emails', label: 'Emails', count: emailStats.sent },
     { key: 'company', label: 'Company' },
     { key: 'details', label: 'All Fields' },
+    { key: 'ai', label: 'AI Agent', icon: Sparkles },
   ]
 
   return (
@@ -324,12 +326,13 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate }: Props) {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
                   activeTab === tab.key
-                    ? 'text-blue-600 border-blue-600'
+                    ? tab.key === 'ai' ? 'text-violet-600 border-violet-600' : 'text-blue-600 border-blue-600'
                     : 'text-slate-400 border-transparent hover:text-slate-600'
                 }`}
               >
+                {tab.icon && <tab.icon size={13} />}
                 {tab.label}
                 {tab.count !== undefined && (
                   <span className={`ml-1.5 text-xs ${activeTab === tab.key ? 'text-blue-400' : 'text-slate-300'}`}>
@@ -507,6 +510,15 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate }: Props) {
                     ))}
                 </div>
               </div>
+            )}
+
+            {/* ── AI Agent Tab ── */}
+            {activeTab === 'ai' && (
+              <AgentPanel
+                leadId={lead.id}
+                leadName={displayName}
+                leadEmail={lead.email}
+              />
             )}
           </div>
         </div>

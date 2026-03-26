@@ -252,6 +252,69 @@ export interface EmailLeadsData {
   error: string | null
 }
 
+// --- AI Agent Types ---
+
+export interface AgentStatus {
+  provider: string
+  model: string
+  configured: boolean
+}
+
+export interface LeadContext {
+  context: Record<string, unknown>
+  brief: string
+}
+
+export interface DraftEmailRequest {
+  lead_id: string
+  custom_instructions?: string
+}
+
+export interface FollowUpRequest {
+  lead_id: string
+  follow_up_number?: number
+  previous_emails?: string
+  custom_instructions?: string
+}
+
+export interface LinkedInPostRequest {
+  topic: string
+  style?: string
+  custom_instructions?: string
+}
+
+export interface CopywritingRequest {
+  content_type: 'landing_page' | 'ad_copy' | 'case_study' | 'website_section'
+  topic: string
+  audience?: string
+  custom_instructions?: string
+}
+
+export interface FreeformRequest {
+  prompt: string
+  lead_id?: string
+  system?: string
+}
+
+export interface AgentEmailResult {
+  email_body: string
+  lead_id: string
+  lead_name: string
+  email_to: string
+  type: string
+  follow_up_number?: number
+  lead_brief: string
+}
+
+export interface AgentContentResult {
+  content: string
+  type: string
+  topic?: string
+  style?: string
+  audience?: string
+  lead_id?: string
+}
+
 // --- Sync Types ---
 
 export interface SyncContact {

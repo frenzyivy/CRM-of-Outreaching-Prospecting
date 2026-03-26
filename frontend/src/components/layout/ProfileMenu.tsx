@@ -4,6 +4,7 @@ import {
   Settings, LogOut, ChevronRight, Sun, Moon, Monitor,
 } from 'lucide-react'
 import { useTheme, type Theme } from '../../contexts/ThemeContext'
+import { useAuth } from '../../contexts/AuthContext'
 import NotificationsPanel from '../profile/NotificationsPanel'
 import WhatsNewModal from '../profile/WhatsNewModal'
 import InviteModal from '../profile/InviteModal'
@@ -12,19 +13,18 @@ import LanguageModal from '../profile/LanguageModal'
 import SettingsModal from '../profile/SettingsModal'
 import LogoutModal from '../profile/LogoutModal'
 
-const USER = {
-  name: 'Komal Singh',
-  email: 'komal@allianzaai.com',
-  initials: 'K',
-}
-
 type Modal = 'notifications' | 'whatsNew' | 'invite' | 'help' | 'language' | 'settings' | 'logout' | null
 
 export default function ProfileMenu() {
   const [open, setOpen] = useState(false)
   const [activeModal, setActiveModal] = useState<Modal>(null)
   const { theme, setTheme } = useTheme()
+  const { user, signOut } = useAuth()
   const ref = useRef<HTMLDivElement>(null)
+
+  const userEmail = user?.email ?? ''
+  const userName = user?.user_metadata?.full_name ?? userEmail.split('@')[0] ?? 'User'
+  const userInitials = userName.charAt(0).toUpperCase()
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -43,10 +43,9 @@ export default function ProfileMenu() {
 
   const closeModal = () => setActiveModal(null)
 
-  const handleLogoutConfirm = () => {
-    // In a real app: clear auth tokens, redirect to login
+  const handleLogoutConfirm = async () => {
     closeModal()
-    alert('Signed out successfully.')
+    await signOut()
   }
 
   const menuItems = [
@@ -73,10 +72,10 @@ export default function ProfileMenu() {
           aria-label="Open profile menu"
         >
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
-            {USER.initials}
+            {userInitials}
           </div>
           <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover/sidebar:!opacity-0 pointer-events-none transition-opacity z-50 border border-slate-700 shadow-lg">
-            {USER.name}
+            {userName}
           </span>
         </button>
 
@@ -86,11 +85,11 @@ export default function ProfileMenu() {
             {/* Profile Header */}
             <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-base font-bold text-white shrink-0">
-                {USER.initials}
+                {userInitials}
               </div>
               <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-slate-900 truncate">{USER.name}</p>
-                <p className="text-xs text-slate-500 truncate">{USER.email}</p>
+                <p className="text-sm font-semibold text-slate-900 truncate">{userName}</p>
+                <p className="text-xs text-slate-500 truncate">{userEmail}</p>
               </div>
             </div>
 
