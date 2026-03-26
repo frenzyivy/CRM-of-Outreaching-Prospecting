@@ -29,6 +29,7 @@ def write_linkedin_post(
     topic: str,
     style: str = "thought leadership",
     custom_instructions: str = "",
+    model: str | None = None,
 ) -> dict:
     """
     Generate a LinkedIn post.
@@ -58,6 +59,7 @@ def write_linkedin_post(
         system=system,
         max_tokens=1024,
         temperature=0.8,
+        model=model,
     )
 
     return {
@@ -73,6 +75,7 @@ def write_copy(
     topic: str,
     audience: str = "healthcare decision-makers",
     custom_instructions: str = "",
+    model: str | None = None,
 ) -> dict:
     """
     Generate marketing copy.
@@ -104,6 +107,7 @@ def write_copy(
         system=system,
         max_tokens=1536,
         temperature=0.7,
+        model=model,
     )
 
     return {

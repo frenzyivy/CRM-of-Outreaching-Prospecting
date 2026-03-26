@@ -31,6 +31,7 @@ def _fill_template(template: str, variables: dict) -> str:
 def draft_cold_email(
     lead_id: str,
     custom_instructions: str = "",
+    model: str | None = None,
 ) -> dict:
     """
     Generate a cold outreach email for a lead.
@@ -71,6 +72,7 @@ def draft_cold_email(
         system=system,
         max_tokens=512,
         temperature=0.7,
+        model=model,
     )
 
     return {
@@ -88,6 +90,7 @@ def draft_follow_up(
     follow_up_number: int = 1,
     previous_emails: str = "",
     custom_instructions: str = "",
+    model: str | None = None,
 ) -> dict:
     """
     Generate a follow-up email for a lead.
@@ -141,6 +144,7 @@ def draft_follow_up(
         system=system,
         max_tokens=384,
         temperature=0.7,
+        model=model,
     )
 
     return {

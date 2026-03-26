@@ -33,11 +33,28 @@ def _get_model() -> str:
     return os.getenv("LLM_MODEL", DEFAULT_MODELS.get(provider, "claude-sonnet-4-20250514"))
 
 
+# Available models per provider
+AVAILABLE_MODELS = {
+    "anthropic": [
+        {"id": "claude-sonnet-4-20250514", "name": "Claude Sonnet 4"},
+        {"id": "claude-haiku-4-5-20251001", "name": "Claude Haiku 4.5"},
+        {"id": "claude-opus-4-20250514", "name": "Claude Opus 4"},
+    ],
+    "openai": [
+        {"id": "gpt-4o", "name": "GPT-4o"},
+        {"id": "gpt-4o-mini", "name": "GPT-4o Mini"},
+        {"id": "gpt-4.1", "name": "GPT-4.1"},
+        {"id": "gpt-4.1-mini", "name": "GPT-4.1 Mini"},
+    ],
+}
+
+
 def generate(
     prompt: str,
     system: str = "",
     max_tokens: int = 2048,
     temperature: float = 0.7,
+    model: str | None = None,
 ) -> str:
     """
     Generate text from the configured LLM provider.
@@ -47,6 +64,7 @@ def generate(
         system: System instructions
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature (0.0 = deterministic, 1.0 = creative)
+        model: Optional model override (e.g. "claude-haiku-4-5-20251001", "gpt-4o-mini")
 
     Returns:
         Generated text string
@@ -57,14 +75,14 @@ def generate(
     provider = _get_provider()
 
     if provider == "anthropic":
-        return _generate_anthropic(prompt, system, max_tokens, temperature)
+        return _generate_anthropic(prompt, system, max_tokens, temperature, model)
     elif provider == "openai":
-        return _generate_openai(prompt, system, max_tokens, temperature)
+        return _generate_openai(prompt, system, max_tokens, temperature, model)
     else:
         raise RuntimeError(f"Unsupported LLM_PROVIDER: {provider}. Use 'anthropic' or 'openai'.")
 
 
-def _generate_anthropic(prompt: str, system: str, max_tokens: int, temperature: float) -> str:
+def _generate_anthropic(prompt: str, system: str, max_tokens: int, temperature: float, model: str | None = None) -> str:
     import anthropic
 
     api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
@@ -72,10 +90,10 @@ def _generate_anthropic(prompt: str, system: str, max_tokens: int, temperature: 
         raise RuntimeError("ANTHROPIC_API_KEY not set in .env")
 
     client = anthropic.Anthropic(api_key=api_key)
-    model = _get_model()
+    use_model = model or _get_model()
 
     kwargs = {
-        "model": model,
+        "model": use_model,
         "max_tokens": max_tokens,
         "temperature": temperature,
         "messages": [{"role": "user", "content": prompt}],
@@ -87,7 +105,7 @@ def _generate_anthropic(prompt: str, system: str, max_tokens: int, temperature: 
     return response.content[0].text
 
 
-def _generate_openai(prompt: str, system: str, max_tokens: int, temperature: float) -> str:
+def _generate_openai(prompt: str, system: str, max_tokens: int, temperature: float, model: str | None = None) -> str:
     from openai import OpenAI
 
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -95,7 +113,7 @@ def _generate_openai(prompt: str, system: str, max_tokens: int, temperature: flo
         raise RuntimeError("OPENAI_API_KEY not set in .env")
 
     client = OpenAI(api_key=api_key)
-    model = _get_model()
+    use_model = model or _get_model()
 
     messages = []
     if system:
@@ -103,7 +121,7 @@ def _generate_openai(prompt: str, system: str, max_tokens: int, temperature: flo
     messages.append({"role": "user", "content": prompt})
 
     response = client.chat.completions.create(
-        model=model,
+        model=use_model,
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature,
@@ -122,10 +140,11 @@ def is_configured() -> bool:
 
 
 def get_status() -> dict:
-    """Return the current LLM configuration status."""
+    """Return the current LLM configuration status with available models."""
     provider = _get_provider()
     return {
         "provider": provider,
         "model": _get_model(),
         "configured": is_configured(),
+        "available_models": AVAILABLE_MODELS.get(provider, []),
     }

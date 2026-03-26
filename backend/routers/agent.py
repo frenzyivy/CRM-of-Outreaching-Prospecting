@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/agent", tags=["agent"])
 class DraftEmailRequest(BaseModel):
     lead_id: str
     custom_instructions: str = ""
+    model: str | None = None
 
 
 class FollowUpRequest(BaseModel):
@@ -20,12 +21,14 @@ class FollowUpRequest(BaseModel):
     follow_up_number: int = 1
     previous_emails: str = ""
     custom_instructions: str = ""
+    model: str | None = None
 
 
 class LinkedInPostRequest(BaseModel):
     topic: str
     style: str = "thought leadership"
     custom_instructions: str = ""
+    model: str | None = None
 
 
 class CopywritingRequest(BaseModel):
@@ -33,12 +36,14 @@ class CopywritingRequest(BaseModel):
     topic: str
     audience: str = "healthcare decision-makers"
     custom_instructions: str = ""
+    model: str | None = None
 
 
 class FreeformRequest(BaseModel):
     prompt: str
     lead_id: str | None = None
     system: str = ""
+    model: str | None = None
 
 
 # --- Endpoints ---
@@ -75,6 +80,7 @@ def draft_email(body: DraftEmailRequest):
     result = draft_cold_email(
         lead_id=body.lead_id,
         custom_instructions=body.custom_instructions,
+        model=body.model,
     )
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
@@ -95,6 +101,7 @@ def draft_follow_up(body: FollowUpRequest):
         follow_up_number=body.follow_up_number,
         previous_emails=body.previous_emails,
         custom_instructions=body.custom_instructions,
+        model=body.model,
     )
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
@@ -114,6 +121,7 @@ def generate_linkedin_post(body: LinkedInPostRequest):
         topic=body.topic,
         style=body.style,
         custom_instructions=body.custom_instructions,
+        model=body.model,
     )
 
 
@@ -136,6 +144,7 @@ def generate_copy(body: CopywritingRequest):
         topic=body.topic,
         audience=body.audience,
         custom_instructions=body.custom_instructions,
+        model=body.model,
     )
 
 
@@ -162,7 +171,7 @@ def freeform_generate(body: FreeformRequest):
         "Help the user with their request using the lead context provided."
     )
 
-    result = generate(prompt=prompt, system=system, max_tokens=2048, temperature=0.7)
+    result = generate(prompt=prompt, system=system, max_tokens=2048, temperature=0.7, model=body.model)
 
     return {
         "content": result.strip(),

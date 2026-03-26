@@ -254,10 +254,16 @@ export interface EmailLeadsData {
 
 // --- AI Agent Types ---
 
+export interface AgentModelOption {
+  id: string
+  name: string
+}
+
 export interface AgentStatus {
   provider: string
   model: string
   configured: boolean
+  available_models: AgentModelOption[]
 }
 
 export interface LeadContext {
@@ -268,6 +274,7 @@ export interface LeadContext {
 export interface DraftEmailRequest {
   lead_id: string
   custom_instructions?: string
+  model?: string
 }
 
 export interface FollowUpRequest {
@@ -275,12 +282,14 @@ export interface FollowUpRequest {
   follow_up_number?: number
   previous_emails?: string
   custom_instructions?: string
+  model?: string
 }
 
 export interface LinkedInPostRequest {
   topic: string
   style?: string
   custom_instructions?: string
+  model?: string
 }
 
 export interface CopywritingRequest {
@@ -288,12 +297,14 @@ export interface CopywritingRequest {
   topic: string
   audience?: string
   custom_instructions?: string
+  model?: string
 }
 
 export interface FreeformRequest {
   prompt: string
   lead_id?: string
   system?: string
+  model?: string
 }
 
 export interface AgentEmailResult {
