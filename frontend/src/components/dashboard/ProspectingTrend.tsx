@@ -4,7 +4,6 @@ import { prospectingData } from '../../data/mockDashboardData'
 
 export default function ProspectingTrend() {
   const totalEmails = prospectingData.reduce((s, d) => s + d.emailsSent, 0)
-  const totalCalls = prospectingData.reduce((s, d) => s + d.callsMade, 0)
   const totalReplies = prospectingData.reduce((s, d) => s + d.repliesReceived, 0)
   const dailyAvg = Math.round(totalEmails / 30)
   const bestDay = prospectingData.reduce((best, d) => d.emailsSent > best.emailsSent ? d : best)

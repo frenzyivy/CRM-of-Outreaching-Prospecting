@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Mail, Phone, PhoneOff, Calendar, ArrowRight, MessageSquare, Reply } from 'lucide-react'
-import type { ActivityFeedItem, ActivityAction } from '../../data/mockDashboardData'
+import type { ActivityAction } from '../../data/mockDashboardData'
 import { activityFeed } from '../../data/mockDashboardData'
 
 const actionConfig: Record<ActivityAction, { icon: typeof Mail; label: string; colorClass: string }> = {

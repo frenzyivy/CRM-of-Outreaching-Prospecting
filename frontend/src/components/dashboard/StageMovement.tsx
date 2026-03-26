@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowDown } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { stageMovements } from '../../data/mockDashboardData'
 
 export default function StageMovement() {

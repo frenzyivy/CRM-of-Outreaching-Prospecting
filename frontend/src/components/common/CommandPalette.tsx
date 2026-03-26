@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, LayoutDashboard, Kanban, Users, Mail, Phone, MessageCircle,
-  BarChart3, DollarSign, CalendarDays, Plug, User, Building2, X,
+  BarChart3, DollarSign, CalendarDays, Plug, User,
 } from 'lucide-react'
 import { useLeadsData } from '../../hooks/useLeads'
 import type { LeadRecord } from '../../types'

@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Line, ComposedChart } from 'recharts'
+import { Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Line, ComposedChart } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { wonLostHistory, lostReasons } from '../../data/mockDashboardData'
 

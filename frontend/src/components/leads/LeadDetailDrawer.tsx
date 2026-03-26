@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Mail, Phone, StickyNote, Building2,
-  Globe, Share2, MapPin, ExternalLink, Send, Eye, MousePointer, Reply,
+  Globe, Share2, ExternalLink, Send, Eye, MousePointer, Reply,
   Calendar, Tag, MoreVertical
 } from 'lucide-react'
 import { useLeadDetail } from '../../hooks/useLeads'

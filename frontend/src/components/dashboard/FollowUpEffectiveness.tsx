@@ -53,7 +53,7 @@ export default function FollowUpEffectiveness() {
           <YAxis tick={{ fontSize: 10 }} unit="%" />
           <Tooltip
             contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', fontSize: '12px', color: '#e2e8f0' }}
-            formatter={(v: number) => [`${v}%`, 'Response Rate']}
+            formatter={(v) => [`${v}%`, 'Response Rate']}
             labelFormatter={(v) => `${v} day delay`}
           />
           <Line type="monotone" dataKey="responseRate" stroke="#8b5cf6" dot={{ r: 3, fill: '#8b5cf6' }} strokeWidth={2} />

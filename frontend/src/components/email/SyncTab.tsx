@@ -11,7 +11,6 @@ import {
   XCircle,
 } from 'lucide-react'
 import { useSyncPreview, useSyncCampaigns, useSyncPush } from '../../hooks/useSync'
-import type { SyncContact } from '../../types'
 
 export default function SyncTab() {
   const { data: preview, isLoading: previewLoading, refetch: refetchPreview } = useSyncPreview()
