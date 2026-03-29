@@ -12,7 +12,12 @@ from typing import Any
 
 import pandas as pd
 
-from tools.supabase_client import upsert_lead, mark_lead_synced, get_client
+from difflib import SequenceMatcher
+
+from tools.supabase_client import (
+    mark_lead_synced, get_client,
+    _normalize_company_name, _normalize_linkedin, _normalize_phone, _build_name_key,
+)
 from tools.instantly import _api_post, fetch_campaigns
 
 # ---------------------------------------------------------------------------
@@ -56,6 +61,26 @@ COLUMN_MAP: dict[str, str] = {
     "linkedin": "linkedin",
     "linkedin_url": "linkedin",
     "linkedin_profile": "linkedin",
+    # instagram (person-level)
+    "instagram": "instagram",
+    "instagram_url": "instagram",
+    "instagram_profile": "instagram",
+    "ig_handle": "instagram",
+    "ig_url": "instagram",
+    # facebook (person-level)
+    "facebook": "facebook",
+    "facebook_url": "facebook",
+    "facebook_profile": "facebook",
+    "fb_url": "facebook",
+    "fb_profile": "facebook",
+    # twitter / X (person-level)
+    "twitter": "twitter",
+    "twitter_url": "twitter",
+    "twitter_handle": "twitter",
+    "twitter_profile": "twitter",
+    "x_url": "twitter",
+    "x_handle": "twitter",
+    "x_profile": "twitter",
     # website
     "website": "website",
     "url": "website",
@@ -73,13 +98,78 @@ COLUMN_MAP: dict[str, str] = {
     "notes": "notes",
     "note": "notes",
     "comments": "notes",
+    # professional email alias
+    "professional_email": "email",
+    # email status (valid/risky/invalid)
+    "email_status": "email_status",
+    "email_validity": "email_status",
+    # company data available
+    "company_data_available": "company_data_available",
+    # company website alias
+    "company_website": "company_website",
+    # email type
+    "email_type": "email_type",
+    # specialty
+    "specialty": "specialty",
+    "speciality": "specialty",
+    # sub-specialties
+    "sub_specialties": "sub_specialties",
+    "sub_specialty": "sub_specialties",
+    "subspecialties": "sub_specialties",
+    # street address
+    "street_address": "street_address",
+    "address": "street_address",
+    "street": "street_address",
+    # postal code
+    "postal_code": "postal_code",
+    "zip_code": "postal_code",
+    "zip": "postal_code",
+    "postcode": "postal_code",
+    # star rating
+    "star_rating": "star_rating",
+    "rating": "star_rating",
+    "stars": "star_rating",
+    # number of reviews
+    "number_of_reviews": "number_of_reviews",
+    "reviews": "number_of_reviews",
+    "review_count": "number_of_reviews",
+    # company linkedin
+    "company_linkedin": "company_linkedin",
+    "company_linkedin_url": "company_linkedin",
+    # company instagram
+    "company_instagram": "company_instagram",
+    # company facebook
+    "company_facebook": "company_facebook",
+    "company_facebook_url": "company_facebook",
+    # company twitter / X
+    "company_twitter": "company_twitter",
+    "company_twitter_url": "company_twitter",
+    "company_x": "company_twitter",
+    # company size
+    "company_size": "company_size",
+    "employees": "company_size",
+    "employee_count": "company_size",
+    # lead quality remarks
+    "lead_quality_remarks": "lead_quality_remarks",
+    "quality_remarks": "lead_quality_remarks",
+    "remarks": "lead_quality_remarks",
+    # premium badge
+    "premium_badge": "premium_badge",
+    "premium": "premium_badge",
+    # detail page url
+    "detail_page_url": "detail_page_url",
+    "detail_url": "detail_page_url",
+    "profile_url": "detail_page_url",
+    # experience
+    "experience": "experience",
+    "years_of_experience": "experience",
+    # skills
+    "skills": "skills",
+    # lead tier (hot/warm/cold)
+    "lead_tier": "lead_tier",
+    "lead_quality": "lead_tier",
 }
 
-LEAD_TYPE_FIELDS = {
-    "contact": {"email", "first_name", "last_name", "full_name", "title", "phone", "linkedin"},
-    "company": {"company_name", "website", "industry", "city", "state", "country"},
-    "lead": {"email", "first_name", "last_name", "company_name", "title"},
-}
 
 
 def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -100,37 +190,50 @@ def _is_valid_email(email: Any) -> bool:
     return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email.strip()))
 
 
-def _detect_lead_type(row: dict) -> str:
-    """Guess lead_type from which fields are populated."""
-    has_email = bool(row.get("email"))
-    has_person = bool(row.get("first_name") or row.get("last_name") or row.get("full_name"))
-    has_company_only = bool(row.get("company_name")) and not has_person and not has_email
 
-    if has_company_only:
-        return "company"
-    if has_person or has_email:
-        return "contact"
-    return "lead"
-
-
-def _parse_dataframe(df: pd.DataFrame, source: str) -> list[dict]:
-    """Convert a DataFrame into a list of lead dicts ready for Supabase."""
+def _parse_dataframe(df: pd.DataFrame, source: str) -> tuple[list[dict], list[dict]]:
+    """Convert a DataFrame into a list of lead dicts ready for Supabase.
+    Returns (leads, skipped_rows)."""
     df = _normalize_columns(df)
     df = df.dropna(how="all")
     df = df.fillna("")
 
+    # Columns that actually exist in the Supabase 'leads' table
+    TABLE_COLS = {
+        "city", "company_name", "country", "email",
+        "first_name", "full_name", "industry", "last_name",
+        "linkedin", "notes", "phone", "raw_data", "source", "state",
+        "title", "website",
+        # Extended schema
+        "email_status", "email_type", "specialty", "sub_specialties",
+        "street_address", "postal_code", "star_rating", "number_of_reviews",
+        "company_website", "company_linkedin", "company_instagram",
+        "company_facebook", "company_twitter",
+        "instagram", "facebook", "twitter",
+        "company_size", "lead_quality_remarks", "premium_badge",
+        "detail_page_url", "experience", "skills", "lead_tier",
+        "lead_type",
+    }
+
+    _TIER_VALUES = {"hot", "warm", "cold"}
     known_cols = set(COLUMN_MAP.values())
     leads = []
+    skipped_rows: list[dict] = []
 
     for _, row in df.iterrows():
         row_dict = row.to_dict()
 
         lead: dict[str, Any] = {"source": source, "raw_data": {}}
 
-        # Map known fields
+        # Map known fields — only put actual table columns as top-level keys,
+        # everything else goes into raw_data
         for col in known_cols:
             if col in row_dict and row_dict[col] != "":
-                lead[col] = str(row_dict[col]).strip()
+                val = str(row_dict[col]).strip()
+                if col in TABLE_COLS:
+                    lead[col] = val
+                else:
+                    lead["raw_data"][col] = val
 
         # Store unknown columns in raw_data
         for col, val in row_dict.items():
@@ -147,12 +250,60 @@ def _parse_dataframe(df: pd.DataFrame, source: str) -> list[dict]:
             if not _is_valid_email(lead["email"]):
                 lead["email"] = ""  # keep the row but don't use invalid email as key
 
-        # Detect lead type
-        lead["lead_type"] = _detect_lead_type(lead)
+        # Normalise country name variants
+        if lead.get("country"):
+            lead["country"] = _normalise_country(lead["country"])
+
+        # Rescue CSV "Lead Type" column (Hot/Warm/Cold) → lead_tier
+        csv_lead_type = str(lead.get("lead_type", "")).strip().lower()
+        if csv_lead_type in _TIER_VALUES:
+            lead["lead_tier"] = csv_lead_type
+
+        # Set lead_type discriminator ("contact" or "company") for DB NOT-NULL column
+        has_person_data = bool(
+            lead.get("first_name") or lead.get("last_name") or lead.get("full_name") or lead.get("email")
+        )
+        lead["lead_type"] = "contact" if has_person_data else "company"
+
+        # COMPULSORY: every row must have either person data or company data
+        has_email = bool(lead.get("email"))
+        has_website = bool(lead.get("website", "").strip())
+        has_person = bool(lead.get("first_name") or lead.get("full_name"))
+        has_company = bool(lead.get("company_name"))
+        if not has_email and not has_website and not has_person and not has_company:
+            skipped_rows.append(lead)
+            continue
 
         leads.append(lead)
 
-    return leads
+    return leads, skipped_rows
+
+
+_COUNTRY_ALIASES: dict[str, str] = {
+    "usa": "United States", "us": "United States", "u.s.": "United States",
+    "u.s.a.": "United States", "united states of america": "United States",
+    "uk": "United Kingdom", "u.k.": "United Kingdom",
+    "great britain": "United Kingdom", "england": "United Kingdom",
+    "uae": "United Arab Emirates", "u.a.e.": "United Arab Emirates",
+    "ksa": "Saudi Arabia",
+}
+
+
+def _normalise_country(country: str) -> str:
+    """Normalise common country name variants."""
+    if not country:
+        return country
+    lower = country.strip().lower()
+    return _COUNTRY_ALIASES.get(lower, country.strip())
+
+
+def _normalise_website(url: str) -> str:
+    """Strip protocol and trailing slash for consistent website matching."""
+    url = url.strip().lower()
+    for prefix in ("https://", "http://", "www."):
+        if url.startswith(prefix):
+            url = url[len(prefix):]
+    return url.rstrip("/")
 
 
 def ingest_file(
@@ -166,8 +317,13 @@ def ingest_file(
     Main ingestion entry point.
     Accepts either a file path (folder watcher) or raw bytes (UI upload).
 
+    Deduplication logic:
+    - Contacts/Leads: matched by **email**
+    - Companies (no email): matched by **website**
+
     Returns:
-        { inserted, updated, skipped, pushed_to_instantly, errors }
+        { inserted, updated, duplicates_in_file, total_rows,
+          company_linked, pushed_to_instantly, errors }
     """
     errors: list[str] = []
 
@@ -189,54 +345,201 @@ def ingest_file(
             else:
                 dfs = [pd.read_csv(file_path)]
         else:
-            return {"inserted": 0, "updated": 0, "skipped": 0,
-                    "pushed_to_instantly": 0, "errors": ["No file provided."]}
+            return {"inserted": 0, "updated": 0, "duplicates_in_file": 0,
+                    "total_rows": 0, "errors": ["No file provided."]}
     except Exception as e:
-        return {"inserted": 0, "updated": 0, "skipped": 0,
-                "pushed_to_instantly": 0, "errors": [f"Failed to read file: {e}"]}
+        return {"inserted": 0, "updated": 0, "duplicates_in_file": 0,
+                "total_rows": 0, "errors": [f"Failed to read file: {e}"]}
 
     # --- Parse all sheets/frames ---
     all_leads: list[dict] = []
+    all_skipped_rows: list[dict] = []
     for df in dfs:
-        all_leads.extend(_parse_dataframe(df, source))
+        leads, skipped = _parse_dataframe(df, source)
+        all_leads.extend(leads)
+        all_skipped_rows.extend(skipped)
+
+    skipped_no_key = len(all_skipped_rows)
+
+    # Flatten skipped rows for CSV download (merge raw_data into top-level)
+    skipped_flat: list[dict] = []
+    for row in all_skipped_rows:
+        flat: dict[str, str] = {}
+        for k, v in row.items():
+            if k in ("source", "raw_data"):
+                continue
+            if v:
+                flat[k] = str(v)
+        for k, v in (row.get("raw_data") or {}).items():
+            if v:
+                flat[k] = str(v)
+        if flat:
+            skipped_flat.append(flat)
+
+    if not all_leads and skipped_no_key > 0:
+        return {"inserted": 0, "updated": 0, "duplicates_in_file": 0,
+                "skipped_no_key": skipped_no_key, "skipped_rows": skipped_flat,
+                "total_rows": skipped_no_key,
+                "errors": [f"{skipped_no_key} row(s) skipped — every row must have an email or website."]}
 
     if not all_leads:
-        return {"inserted": 0, "updated": 0, "skipped": 0,
-                "pushed_to_instantly": 0, "errors": ["No lead rows found in file."]}
+        return {"inserted": 0, "updated": 0, "duplicates_in_file": 0,
+                "skipped_no_key": 0, "skipped_rows": [],
+                "total_rows": 0, "errors": ["No lead rows found in file."]}
 
-    # --- Upsert into Supabase ---
+    # --- Step 1: Deduplicate within the uploaded file itself ---
+    # Cascading key: email → website (companies) → LinkedIn → phone → name+company
+    seen_keys: set[str] = set()
+    unique_leads: list[dict] = []
+    duplicates_in_file = 0
+
+    for lead in all_leads:
+        dedup_key = ""
+        email = lead.get("email", "").strip().lower()
+        website = lead.get("website", "").strip()
+        linkedin = (lead.get("linkedin") or "").strip()
+        phone = (lead.get("phone") or "").strip()
+
+        if email:
+            dedup_key = f"email:{email}"
+        elif website:
+            dedup_key = f"website:{_normalise_website(website)}"
+        elif linkedin:
+            norm_li = _normalize_linkedin(linkedin)
+            if norm_li and "linkedin.com" in norm_li:
+                dedup_key = f"linkedin:{norm_li}"
+        elif phone:
+            norm_phone = _normalize_phone(phone)
+            if len(norm_phone) >= 7:
+                dedup_key = f"phone:{norm_phone}"
+        else:
+            # Last resort: name + company (exact normalized match within file)
+            name = _build_name_key(
+                lead.get("first_name", ""),
+                lead.get("last_name", ""),
+                lead.get("full_name", ""),
+            )
+            company = _normalize_company_name(lead.get("company_name", ""))
+            if name and company:
+                dedup_key = f"namecompany:{name}|{company}"
+
+        if dedup_key:
+            if dedup_key in seen_keys:
+                duplicates_in_file += 1
+                continue
+            seen_keys.add(dedup_key)
+
+        unique_leads.append(lead)
+
+    # --- Step 2: Upsert into Supabase ---
     inserted = 0
     updated = 0
-    skipped = 0
     newly_inserted_ids: list[str] = []
 
     db = get_client()
 
-    for lead in all_leads:
+    for lead in unique_leads:
         try:
-            email = lead.get("email", "")
+            email = lead.get("email", "").strip().lower()
+            website = lead.get("website", "").strip()
 
-            # Check if lead already exists (by email)
-            exists = False
+            # --- Check if record already exists in DB (cascading match) ---
+            existing_row = None
+            linkedin = (lead.get("linkedin") or "").strip()
+            phone = (lead.get("phone") or "").strip()
+
             if email:
-                res = db.table("leads").select("id").ilike("email", email).execute()
-                exists = bool(res.data)
+                res = db.table("leads").select("*").ilike("email", email).limit(1).execute()
+                if res.data:
+                    existing_row = res.data[0]
 
-            result = upsert_lead(lead)
-            lead_id = result.get("id")
+            if not existing_row and website:
+                norm = _normalise_website(website)
+                domain_part = norm.split("/")[0]
+                res = db.table("leads").select("*").ilike("website", f"%{domain_part}%").execute()
+                for row in (res.data or []):
+                    row_website = (row.get("website") or "").strip()
+                    if row_website and _normalise_website(row_website) == norm:
+                        existing_row = row
+                        break
 
-            if lead_id:
-                if exists:
-                    updated += 1
-                else:
+            if not existing_row and linkedin:
+                norm_li = _normalize_linkedin(linkedin)
+                if norm_li and "linkedin.com" in norm_li:
+                    res = db.table("leads").select("*").ilike("linkedin", f"%{norm_li}%").limit(1).execute()
+                    if res.data:
+                        existing_row = res.data[0]
+
+            if not existing_row and phone:
+                norm_phone = _normalize_phone(phone)
+                if len(norm_phone) >= 7:
+                    res = db.table("leads").select("*").ilike("phone", f"%{norm_phone[-7:]}%").execute()
+                    for row in (res.data or []):
+                        if _normalize_phone(row.get("phone") or "") == norm_phone:
+                            existing_row = row
+                            break
+
+            if not existing_row and not email:
+                # Last resort: fuzzy name + company match
+                name = _build_name_key(
+                    lead.get("first_name", ""),
+                    lead.get("last_name", ""),
+                    lead.get("full_name", ""),
+                )
+                company = _normalize_company_name(lead.get("company_name", ""))
+                if name and company:
+                    res = db.table("leads").select("*").ilike(
+                        "company_name", f"%{company[:10]}%"
+                    ).execute()
+                    for row in (res.data or []):
+                        row_name = _build_name_key(
+                            row.get("first_name", ""),
+                            row.get("last_name", ""),
+                            row.get("full_name", ""),
+                        )
+                        row_company = _normalize_company_name(row.get("company_name", ""))
+                        if (row_name and row_company
+                                and SequenceMatcher(None, name, row_name).ratio() >= 0.85
+                                and SequenceMatcher(None, company, row_company).ratio() >= 0.85):
+                            existing_row = row
+                            break
+
+            if existing_row:
+                # --- UPDATE: merge only missing/empty fields ---
+                update_data: dict[str, Any] = {}
+                existing_raw = existing_row.get("raw_data") or {}
+
+                for key, val in lead.items():
+                    if key in ("source", "raw_data"):
+                        continue
+                    existing_val = existing_row.get(key)
+                    if not existing_val and val:
+                        update_data[key] = val
+
+                # Merge raw_data
+                new_raw = lead.get("raw_data", {})
+                if new_raw:
+                    merged_raw = {**existing_raw}
+                    for rk, rv in new_raw.items():
+                        if rk not in merged_raw or not merged_raw[rk]:
+                            merged_raw[rk] = rv
+                    if merged_raw != existing_raw:
+                        update_data["raw_data"] = merged_raw
+
+                if update_data:
+                    db.table("leads").update(update_data).eq("id", existing_row["id"]).execute()
+
+                updated += 1
+            else:
+                # --- INSERT new lead ---
+                result = db.table("leads").insert(lead).execute()
+                lead_id = (result.data[0] if result.data else {}).get("id")
+                if lead_id:
                     inserted += 1
                     newly_inserted_ids.append(lead_id)
-            else:
-                skipped += 1
 
         except Exception as e:
-            errors.append(f"Row error ({lead.get('email', 'no-email')}): {e}")
-            skipped += 1
+            errors.append(f"Row error ({lead.get('email') or lead.get('website') or 'no-key'}): {e}")
 
     # --- Auto-push new leads to Instantly ---
     pushed = 0
@@ -249,9 +552,11 @@ def ingest_file(
     return {
         "inserted": inserted,
         "updated": updated,
-        "skipped": skipped,
+        "duplicates_in_file": duplicates_in_file,
+        "skipped_no_key": skipped_no_key,
+        "skipped_rows": skipped_flat,
         "pushed_to_instantly": pushed,
-        "total_rows": len(all_leads),
+        "total_rows": len(all_leads) + duplicates_in_file + skipped_no_key,
         "errors": errors,
     }
 
@@ -261,9 +566,12 @@ def _push_to_instantly(lead_ids: list[str], campaign_id: str) -> tuple[int, list
     db = get_client()
     errors: list[str] = []
 
-    # Fetch full lead data for these IDs
-    result = db.table("leads").select("*").in_("id", lead_ids).execute()
-    leads = result.data or []
+    # Fetch full lead data for these IDs (batched to avoid URL-too-long)
+    leads = []
+    for i in range(0, len(lead_ids), 50):
+        batch = lead_ids[i:i + 50]
+        result = db.table("leads").select("*").in_("id", batch).execute()
+        leads.extend(result.data or [])
 
     instantly_leads = []
     for lead in leads:

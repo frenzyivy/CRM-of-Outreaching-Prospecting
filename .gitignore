@@ -23,6 +23,11 @@ imports/
 frontend/node_modules/
 frontend/dist/
 
+# Local config / cache
+.claude/
+.firecrawl/
+mobile/
+
 # OS
 .DS_Store
 Thumbs.db

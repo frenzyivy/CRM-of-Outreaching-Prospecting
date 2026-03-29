@@ -17,6 +17,7 @@ import {
   Loader2,
   Unlink,
   Info,
+  Download,
 } from 'lucide-react'
 import Header from '../layout/Header'
 import api from '../../api/client'
@@ -1005,8 +1006,11 @@ function IntegrationCard({
 
 interface UploadResult {
   inserted: number
-  skipped_duplicates: number
-  failed: number
+  updated: number
+  duplicates_in_file: number
+  skipped_no_key: number
+  skipped_rows?: Record<string, string>[]
+  total_rows: number
   errors?: string[]
 }
 
@@ -1020,6 +1024,27 @@ function UploadTab() {
   const MAX_MB = 20
 
   const handleFile = (f: File) => { setFile(f); setResult(null); setError(null) }
+
+  const downloadSkippedCsv = () => {
+    if (!result?.skipped_rows?.length) return
+    const rows = result.skipped_rows
+    const headers = [...new Set(rows.flatMap(r => Object.keys(r)))]
+    const csvLines = [
+      headers.join(','),
+      ...rows.map(r => headers.map(h => {
+        const val = r[h] || ''
+        return val.includes(',') || val.includes('"') || val.includes('\n')
+          ? `"${val.replace(/"/g, '""')}"` : val
+      }).join(','))
+    ]
+    const blob = new Blob([csvLines.join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'skipped_rows_no_email_or_website.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
   const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }, [])
   const onDragLeave = useCallback(() => setIsDragging(false), [])
   const onDrop = useCallback((e: React.DragEvent) => {
@@ -1041,9 +1066,7 @@ function UploadTab() {
     const form = new FormData()
     form.append('file', file)
     try {
-      const res = await api.post<UploadResult>('/leads/import', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const res = await api.post<UploadResult>('/leads/import', form)
       setResult(res.data)
     } catch (err: unknown) {
       setError(
@@ -1064,8 +1087,9 @@ function UploadTab() {
           <ul className="text-xs text-blue-700 space-y-0.5 list-disc list-inside">
             <li>Upload CSV, Excel (.xlsx / .xls), or PDF files</li>
             <li>New leads are automatically added to your database</li>
-            <li>Duplicate leads (matched by email) are <strong>skipped</strong> — no double entries</li>
-            <li>Existing leads keep all their existing data — only new fields are merged in</li>
+            <li>Existing leads (matched by <strong>email</strong>, <strong>LinkedIn</strong>, <strong>phone</strong>, or <strong>name+company</strong>) are <strong>updated</strong> — missing fields are filled in</li>
+            <li>Companies matched by <strong>website</strong></li>
+            <li>Duplicate rows within the same file are detected and skipped</li>
           </ul>
         </div>
       </div>
@@ -1138,24 +1162,47 @@ function UploadTab() {
 
       {result && (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center gap-2">
-            <CheckCircle2 size={15} className="text-emerald-500" />
-            <span className="text-sm font-medium text-slate-700">Import Complete</span>
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={15} className="text-emerald-500" />
+              <span className="text-sm font-medium text-slate-700">Import Complete</span>
+            </div>
+            <span className="text-xs text-slate-400">{result.total_rows ?? 0} total rows processed</span>
           </div>
-          <div className="grid grid-cols-3 divide-x divide-slate-100">
-            <div className="p-5 text-center">
+          <div className="grid grid-cols-4 divide-x divide-slate-100">
+            <div className="p-4 text-center">
               <p className="text-2xl font-bold text-emerald-600">{result.inserted ?? 0}</p>
-              <p className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><Users size={11} />New leads</p>
+              <p className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><Users size={11} />New</p>
             </div>
-            <div className="p-5 text-center">
-              <p className="text-2xl font-bold text-amber-500">{result.skipped_duplicates ?? 0}</p>
-              <p className="text-xs text-slate-500 mt-1">Duplicates skipped</p>
+            <div className="p-4 text-center">
+              <p className="text-2xl font-bold text-blue-500">{result.updated ?? 0}</p>
+              <p className="text-xs text-slate-500 mt-1">Updated</p>
             </div>
-            <div className="p-5 text-center">
-              <p className={`text-2xl font-bold ${(result.failed ?? 0) > 0 ? 'text-red-500' : 'text-slate-300'}`}>{result.failed ?? 0}</p>
-              <p className="text-xs text-slate-500 mt-1">Failed rows</p>
+            <div className="p-4 text-center">
+              <p className={`text-2xl font-bold ${(result.duplicates_in_file ?? 0) > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{result.duplicates_in_file ?? 0}</p>
+              <p className="text-xs text-slate-500 mt-1">Duplicates</p>
+            </div>
+            <div className="p-4 text-center">
+              <p className={`text-2xl font-bold ${(result.skipped_no_key ?? 0) > 0 ? 'text-red-500' : 'text-slate-300'}`}>{result.skipped_no_key ?? 0}</p>
+              <p className="text-xs text-slate-500 mt-1">No email/website</p>
             </div>
           </div>
+          {(result.skipped_no_key ?? 0) > 0 && result.skipped_rows && result.skipped_rows.length > 0 && (
+            <div className="px-5 py-3 border-t border-slate-100 bg-amber-50/50">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-amber-700">
+                  {result.skipped_no_key} row(s) had no email or website and were not uploaded.
+                </p>
+                <button
+                  onClick={downloadSkippedCsv}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                >
+                  <Download size={12} />
+                  Download skipped rows
+                </button>
+              </div>
+            </div>
+          )}
           {result.errors && result.errors.length > 0 && (
             <div className="px-5 pb-4 space-y-1">
               {result.errors.slice(0, 5).map((e, i) => (

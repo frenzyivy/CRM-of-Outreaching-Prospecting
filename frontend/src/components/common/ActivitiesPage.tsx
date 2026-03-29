@@ -47,7 +47,7 @@ export default function ActivitiesPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-800">{activity.description || 'No description'}</p>
                   <p className="text-xs text-slate-400">
-                    {activity.activity_type} &middot; {activity.lead_type}:{activity.lead_key}
+                    {activity.activity_type} &middot; {activity.lead_id}
                   </p>
                 </div>
                 <span className="text-xs text-slate-400 whitespace-nowrap">

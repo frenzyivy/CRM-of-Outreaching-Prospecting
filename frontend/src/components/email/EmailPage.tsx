@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Mail,
   Eye,
@@ -17,6 +18,7 @@ import {
   Search,
   ArrowRightLeft,
   BarChart3,
+  Settings,
 } from 'lucide-react'
 import {
   BarChart,
@@ -41,6 +43,7 @@ import {
 } from '../../hooks/useEmail'
 import type { CampaignAnalytics, CountryStat, InstantlyLead } from '../../types'
 import SyncTab from './SyncTab'
+import { useIntegrationsStatus } from '../../hooks/useIntegrations'
 
 // --- Stat Card ---
 function StatCard({
@@ -329,6 +332,10 @@ const PIE_COLORS = [
 
 // --- Main Page ---
 export default function EmailPage() {
+  const navigate = useNavigate()
+  const { data: intStatus } = useIntegrationsStatus()
+  const instantlyConnected = intStatus?.instantly?.connected ?? true // default true while loading
+
   const { data: overviewData, isLoading: ol } = useEmailOverview()
   const { data: dailyData, isLoading: dl } = useEmailDaily()
   const { data: countryData, isLoading: cl } = useEmailCountries()
@@ -344,6 +351,34 @@ export default function EmailPage() {
     } finally {
       setRefreshing(false)
     }
+  }
+
+  // Show setup screen when Instantly.ai is disconnected
+  if (!instantlyConnected) {
+    return (
+      <div>
+        <Header title="Email" subtitle="Campaign performance & outreach analytics" />
+        <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Mail size={28} className="text-blue-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            Set Up Your Email Integration
+          </h3>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+            Connect your Instantly.ai account to start tracking email campaigns,
+            opens, replies, bounces, and outreach analytics.
+          </p>
+          <button
+            onClick={() => navigate('/integrations')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+          >
+            <Settings size={14} />
+            Configure in Integrations
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (ol || dl || cl || ll) {

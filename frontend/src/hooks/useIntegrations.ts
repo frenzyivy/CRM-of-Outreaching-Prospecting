@@ -26,12 +26,25 @@ export function useConnectIntegration() {
   })
 }
 
+// Map integration IDs to the query keys they power — when disconnected, clear stale data
+const INTEGRATION_QUERY_KEYS: Record<string, string[][]> = {
+  instantly: [['email-overview'], ['email-daily'], ['email-countries'], ['email-leads']],
+  whatsapp: [['whatsapp-analytics']],
+}
+
 export function useDisconnectIntegration() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (integration_id: string) =>
       (await api.post('/integrations/disconnect', { integration_id })).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['integrations-status'] }),
+    onSuccess: (_data, integration_id) => {
+      qc.invalidateQueries({ queryKey: ['integrations-status'] })
+      // Clear cached data for the disconnected integration's channels
+      const keys = INTEGRATION_QUERY_KEYS[integration_id]
+      if (keys) {
+        keys.forEach((key) => qc.removeQueries({ queryKey: key }))
+      }
+    },
   })
 }
 

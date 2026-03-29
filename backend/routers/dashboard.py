@@ -7,6 +7,7 @@ from core.supabase_client import (
     get_lead_count,
     get_today_stats,
     get_chart_data,
+    get_expenses,
 )
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -28,6 +29,9 @@ def dashboard_stats(
 
     if date_range == "Today":
         date_from = f"{today.isoformat()}T00:00:00"
+    elif date_range == "Last 2 Days":
+        start = today - timedelta(days=1)
+        date_from = f"{start.isoformat()}T00:00:00"
     elif date_range == "This Week":
         start = today - timedelta(days=today.weekday())  # Monday
         date_from = f"{start.isoformat()}T00:00:00"
@@ -75,10 +79,18 @@ def dashboard_stats(
     # Conversion: outreach → free trial
     outreach_to_trial = round((free_trial_count / outreach_stages * 100), 1) if outreach_stages else 0
 
+    # Pull real revenue & expense totals from the expenses table
+    expenses = get_expenses()
+    total_spent = sum(
+        e.get("total_inr") or e.get("amount") or 0 for e in expenses
+    )
+    # Revenue from closed_won deals (placeholder — extend with deal_value when available)
+    revenue_generated = 0
+
     return {
         "total_leads": total,
-        "total_companies": counts["company"],
-        "total_contacts": counts["contact"],
+        "total_companies": counts["with_company"],
+        "total_contacts": counts["with_person"],
         "meetings_count": stage_counts.get("meeting", 0),
         "proposals_count": stage_counts.get("proposal", 0),
         "closed_won_count": stage_counts.get("closed_won", 0),
@@ -88,8 +100,8 @@ def dashboard_stats(
         "free_trial_count": free_trial_count,
         "clients_paid": clients_paid,
         "outreach_to_trial": outreach_to_trial,
-        "revenue_generated": 0,
-        "total_spent": 0,
+        "revenue_generated": revenue_generated,
+        "total_spent": total_spent,
         "stage_counts": stage_counts,
         **activity_stats,
     }

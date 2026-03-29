@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(curl -s \"https://developer.instantly.ai/api-reference/openapi.json\")",
-      "Bash(npx tsc:*)",
-      "Bash(taskkill //PID 40468 //F)"
-    ]
-  }
-}

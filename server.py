@@ -1,6 +1,6 @@
 """
 AI Medical CRM — FastAPI Backend (Supabase Edition)
-Entry point: uvicorn server:app --reload
+uvicorn server:app --reload  --port 8001
 """
 
 import logging
@@ -17,6 +17,8 @@ from tools.supabase_client import (
     get_leads,
     get_lead_by_id,
     get_lead_count,
+    get_company_data,
+    get_people_data,
     get_pipeline_view,
     set_lead_stage,
     log_activity,
@@ -24,6 +26,7 @@ from tools.supabase_client import (
     get_today_stats,
     get_chart_data,
     update_email_engagement,
+    get_expenses,
     PIPELINE_STAGES,
     STAGE_LABELS,
 )
@@ -107,6 +110,9 @@ def dashboard_stats(
 
     if date_range == "Today":
         date_from = f"{today.isoformat()}T00:00:00"
+    elif date_range == "Last 2 Days":
+        start = today - timedelta(days=1)
+        date_from = f"{start.isoformat()}T00:00:00"
     elif date_range == "This Week":
         start = today - timedelta(days=today.weekday())  # Monday
         date_from = f"{start.isoformat()}T00:00:00"
@@ -154,10 +160,18 @@ def dashboard_stats(
     # Conversion: outreach → free trial
     outreach_to_trial = round((free_trial_count / outreach_stages * 100), 1) if outreach_stages else 0
 
+    # Pull real expense totals from the expenses table
+    expenses = get_expenses()
+    total_spent = sum(
+        e.get("total_inr") or e.get("amount") or 0 for e in expenses
+    )
+    # Revenue from closed_won deals (placeholder — extend with deal_value when available)
+    revenue_generated = 0
+
     return {
         "total_leads": total,
-        "total_companies": counts["company"],
-        "total_contacts": counts["contact"],
+        "total_companies": counts["with_company"],
+        "total_contacts": counts["with_person"],
         "meetings_count": stage_counts.get("meeting", 0),
         "proposals_count": stage_counts.get("proposal", 0),
         "closed_won_count": stage_counts.get("closed_won", 0),
@@ -167,8 +181,8 @@ def dashboard_stats(
         "free_trial_count": free_trial_count,
         "clients_paid": clients_paid,
         "outreach_to_trial": outreach_to_trial,
-        "revenue_generated": 0,
-        "total_spent": 0,
+        "revenue_generated": revenue_generated,
+        "total_spent": total_spent,
         "stage_counts": stage_counts,
         **activity_stats,
     }
@@ -266,25 +280,26 @@ def dashboard_chart_data(days: int = Query(default=30, ge=1, le=365)):
 # Leads
 # =========================================================================
 
-@app.get("/api/leads/companies")
-def list_companies():
-    return get_leads(lead_type="company")
+@app.get("/api/leads/company-view")
+def list_company_view():
+    """Records with company_name populated."""
+    return get_company_data()
 
 
-@app.get("/api/leads/contacts")
-def list_contacts():
-    return get_leads(lead_type="contact")
+@app.get("/api/leads/people-view")
+def list_people_view():
+    """Records with person name (first_name/full_name) populated."""
+    return get_people_data()
 
 
-@app.get("/api/leads/leads")
-def list_leads():
-    return get_leads(lead_type="lead")
+@app.get("/api/leads")
+def list_all_leads():
+    """All records."""
+    return get_leads()
 
 
-@app.get("/api/leads/{lead_type}/{lead_id}")
-def get_lead(lead_type: str, lead_id: str):
-    if lead_type not in ("company", "contact", "lead"):
-        raise HTTPException(status_code=400, detail="lead_type must be 'company', 'contact', or 'lead'")
+@app.get("/api/leads/{lead_id}")
+def get_lead(lead_id: str):
     lead = get_lead_by_id(lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
@@ -296,15 +311,12 @@ def get_lead(lead_type: str, lead_id: str):
 # =========================================================================
 
 @app.get("/api/pipeline")
-def pipeline(lead_type: str | None = None):
-    # "contact" tab should show both 'contact' and 'lead' type records (people)
-    if lead_type == "contact":
-        return get_pipeline_view(lead_types=["contact", "lead"])
-    return get_pipeline_view(lead_type=lead_type)
+def pipeline():
+    return get_pipeline_view()
 
 
-@app.put("/api/pipeline/{lead_type}/{lead_id}/stage")
-def update_stage(lead_type: str, lead_id: str, body: StageUpdate):
+@app.put("/api/pipeline/{lead_id}/stage")
+def update_stage(lead_id: str, body: StageUpdate):
     if body.stage not in PIPELINE_STAGES:
         raise HTTPException(
             status_code=400,
@@ -356,13 +368,17 @@ async def import_leads(
     if not contents:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    result = ingest_file(
-        file_bytes=contents,
-        filename=file.filename or "upload.csv",
-        source="csv_upload",
-        auto_push_campaign_id=campaign_id,
-    )
-    return result
+    try:
+        result = ingest_file(
+            file_bytes=contents,
+            filename=file.filename or "upload.csv",
+            source="csv_upload",
+            auto_push_campaign_id=campaign_id,
+        )
+        return result
+    except Exception as e:
+        logger.exception("Lead import failed")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =========================================================================
@@ -372,19 +388,38 @@ async def import_leads(
 class ExpenseCreate(BaseModel):
     name: str
     category: str = "tool"  # tool, api, salary, other
-    amount: float
+    base_amount: float
+    tax: float = 0
+    commission: float = 0
+    original_usd: float | None = None
+    payment_date: str  # required — YYYY-MM-DD
     period: str = "monthly"  # monthly, yearly, one-time
+
+
+class ExpenseUpdate(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    base_amount: float | None = None
+    tax: float | None = None
+    commission: float | None = None
+    original_usd: float | None = None
+    payment_date: str | None = None
+    period: str | None = None
 
 
 @app.get("/api/revenue/summary")
 def revenue_summary():
-    """Return revenue, expenses, and computed ROI."""
-    from tools.supabase_client import get_expenses
+    """Return revenue, expenses, and computed ROI — all values in INR."""
+    from core.supabase_client import get_expenses
 
     expenses = get_expenses()
-    tool_spend = sum(e["amount"] for e in expenses if e.get("category") == "tool")
-    api_spend = sum(e["amount"] for e in expenses if e.get("category") == "api")
-    other_spend = sum(e["amount"] for e in expenses if e.get("category") not in ("tool", "api"))
+
+    def _total(e: dict) -> float:
+        return e.get("total_inr") or e.get("amount") or 0
+
+    tool_spend = sum(_total(e) for e in expenses if e.get("category") == "tool")
+    api_spend = sum(_total(e) for e in expenses if e.get("category") == "api")
+    other_spend = sum(_total(e) for e in expenses if e.get("category") not in ("tool", "api"))
     total_spent = tool_spend + api_spend + other_spend
 
     # Revenue from closed_won deals (placeholder — extend with deal_value when available)
@@ -407,20 +442,45 @@ def revenue_summary():
 
 @app.post("/api/revenue/expenses")
 def add_expense(body: ExpenseCreate):
-    from tools.supabase_client import add_expense as db_add_expense
+    from core.supabase_client import add_expense as db_add_expense
 
-    if body.amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be positive")
+    if body.base_amount <= 0:
+        raise HTTPException(status_code=400, detail="Base amount must be positive")
     if body.category not in ("tool", "api", "salary", "other"):
         raise HTTPException(status_code=400, detail="Invalid category")
 
-    result = db_add_expense(body.name, body.category, body.amount, body.period)
+    result = db_add_expense(
+        name=body.name,
+        category=body.category,
+        base_amount=body.base_amount,
+        tax=body.tax,
+        commission=body.commission,
+        period=body.period,
+        original_usd=body.original_usd,
+        payment_date=body.payment_date,
+    )
+    return {"status": "ok", "expense": result}
+
+
+@app.put("/api/revenue/expenses/{expense_id}")
+def edit_expense(expense_id: str, body: ExpenseUpdate):
+    from core.supabase_client import update_expense as db_update_expense
+
+    updates = body.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    if "base_amount" in updates and updates["base_amount"] <= 0:
+        raise HTTPException(status_code=400, detail="Base amount must be positive")
+    if "category" in updates and updates["category"] not in ("tool", "api", "salary", "other"):
+        raise HTTPException(status_code=400, detail="Invalid category")
+
+    result = db_update_expense(expense_id, updates)
     return {"status": "ok", "expense": result}
 
 
 @app.delete("/api/revenue/expenses/{expense_id}")
 def delete_expense(expense_id: str):
-    from tools.supabase_client import delete_expense as db_delete_expense
+    from core.supabase_client import delete_expense as db_delete_expense
 
     db_delete_expense(expense_id)
     return {"status": "ok"}
@@ -949,9 +1009,8 @@ def health():
         return {
             "status": "healthy",
             "database": "supabase",
-            "companies_count": counts["company"],
-            "contacts_count": counts["contact"],
-            "leads_count": counts["lead"],
+            "with_company_data": counts["with_company"],
+            "with_person_data": counts["with_person"],
             "total": counts["total"],
         }
     except Exception as e:

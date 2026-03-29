@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
-  X, ChevronLeft, ChevronRight, Mail, Phone, StickyNote,
-  Globe, Share2, ExternalLink, Send, Eye, MousePointer, Reply,
-  Calendar, Tag, MoreVertical, Sparkles, Camera, ThumbsUp, AtSign
+  X, ChevronLeft, ChevronRight, Building2, Globe, Phone,
+  Mail, StickyNote, Tag, MoreVertical, Calendar,
+  ExternalLink, Users, Share2, Camera, ThumbsUp, AtSign
 } from 'lucide-react'
-import { useLeadDetail } from '../../hooks/useLeads'
+import { useLeadDetail, useCompanyEmployees } from '../../hooks/useLeads'
 import { useUpdateStage, useLogActivity } from '../../hooks/usePipeline'
 import Badge from '../common/Badge'
 import LeadScoreBadge from '../common/LeadScoreBadge'
-import AgentPanel from '../ai/AgentPanel'
 import { formatDateTime } from '../../lib/utils'
 import type { Lead, Activity } from '../../types'
 
@@ -40,28 +39,16 @@ const activityColors: Record<string, string> = {
   stage_change: 'text-purple-500 bg-purple-50',
 }
 
-type Tab = 'activities' | 'emails' | 'details' | 'ai'
+type Tab = 'activities' | 'details'
 
 interface Props {
   lead: Lead
   onClose: () => void
   onNavigate?: (direction: 'prev' | 'next') => void
-  onOpenCompany?: (companyName: string) => void
+  onOpenLead?: (lead: Lead) => void
 }
 
-function StatBox({ icon: Icon, value, label }: { icon: typeof Mail; value: number | string; label: string }) {
-  return (
-    <div className="flex flex-col items-center py-3 border-r border-slate-100 last:border-r-0">
-      <div className="flex items-center gap-1 mb-0.5">
-        <Icon size={12} className="text-slate-400" />
-        <span className="text-lg font-semibold text-slate-900">{value}</span>
-      </div>
-      <span className="text-[10px] text-slate-400">{label}</span>
-    </div>
-  )
-}
-
-function InfoRow({ label, value, isLink }: { label: string; value: string; isLink?: boolean }) {
+function InfoRow({ label, value, isLink }: { label: string; value?: string; isLink?: boolean }) {
   if (!value || value === '-' || value === 'undefined' || value === 'null') {
     return (
       <div className="flex justify-between items-start py-2 border-b border-slate-50">
@@ -92,15 +79,12 @@ function ActivityItem({ activity, isLast }: { activity: Activity; isLast: boolea
 
   return (
     <div className="flex gap-3 relative">
-      {/* Timeline connector line */}
       {!isLast && (
         <div className="absolute left-[15px] top-[32px] bottom-0 w-px bg-slate-200" />
       )}
-      {/* Icon dot */}
       <div className={`p-1.5 rounded-lg shrink-0 z-10 ${colors}`}>
         <Icon size={14} />
       </div>
-      {/* Content */}
       <div className="flex-1 min-w-0 pb-5">
         <p className="text-sm text-slate-700">{activity.description}</p>
         <div className="flex items-center gap-2 mt-1">
@@ -113,8 +97,9 @@ function ActivityItem({ activity, isLast }: { activity: Activity; isLast: boolea
   )
 }
 
-export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenCompany }: Props) {
+export default function CompanyDetailDrawer({ lead, onClose, onNavigate, onOpenLead }: Props) {
   const { data: detail } = useLeadDetail(lead.id)
+  const { data: employees } = useCompanyEmployees(lead.company_name)
   const updateStage = useUpdateStage()
   const logActivity = useLogActivity()
   const [activityType, setActivityType] = useState<'email' | 'call' | 'note'>('email')
@@ -133,8 +118,12 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
   }
 
   const activities: Activity[] = detail?.activities || []
-  const displayName = lead.full_name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown'
-  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = (lead.company_name || 'U')
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
   const handleStageChange = (stage: string) => {
     updateStage.mutate({ leadId: lead.id, stage })
@@ -150,20 +139,9 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
     setDescription('')
   }
 
-  // Email stats (mock for now based on activities)
-  const emailActivities = activities.filter(a => a.activity_type === 'email')
-  const emailStats = {
-    sent: emailActivities.length,
-    opened: 0,
-    clicked: 0,
-    replied: 0,
-  }
-
-  const tabs: { key: Tab; label: string; count?: number; icon?: typeof Mail }[] = [
+  const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'activities', label: 'Activities', count: activities.length },
-    { key: 'emails', label: 'Emails', count: emailStats.sent },
     { key: 'details', label: 'All Fields' },
-    { key: 'ai', label: 'AI Agent', icon: Sparkles },
   ]
 
   return (
@@ -188,14 +166,14 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
               <button
                 onClick={() => onNavigate('prev')}
                 className="p-1.5 bg-white/90 rounded-lg shadow-md hover:bg-white transition-colors"
-                title="Previous lead"
+                title="Previous company"
               >
                 <ChevronLeft size={16} className="text-slate-600" />
               </button>
               <button
                 onClick={() => onNavigate('next')}
                 className="p-1.5 bg-white/90 rounded-lg shadow-md hover:bg-white transition-colors"
-                title="Next lead"
+                title="Next company"
               >
                 <ChevronRight size={16} className="text-slate-600" />
               </button>
@@ -203,7 +181,7 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
           )}
         </div>
 
-        {/* ─── Left Sidebar: Contact Info ─── */}
+        {/* ─── Left Sidebar: Company Info ─── */}
         <div className="w-[340px] border-r border-slate-100 flex flex-col overflow-y-auto">
           {/* Close + Header */}
           <div className="p-4 border-b border-slate-100">
@@ -218,72 +196,66 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
 
             {/* Avatar + Name */}
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <span className="text-blue-600 font-semibold text-sm">{initials}</span>
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <span className="text-emerald-600 font-semibold text-sm">{initials}</span>
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-semibold text-slate-900 truncate">{displayName}</h2>
+                  <h2 className="text-base font-semibold text-slate-900 truncate">{lead.company_name}</h2>
                   {lead.lead_tier && (
                     <LeadScoreBadge score={lead.lead_score ?? 0} tier={lead.lead_tier} showScore />
                   )}
                 </div>
-                <p className="text-xs text-slate-500 truncate">
-                  {lead.title || String(lead.job_title || '') || 'No title'}
-                </p>
-                {(lead.company_name || lead.company) && (
-                  <button
-                    onClick={() => {
-                      const name = (lead.company_name || String(lead.company || '')) as string
-                      if (name && onOpenCompany) onOpenCompany(name)
-                    }}
-                    className="text-xs text-blue-500 hover:text-blue-700 hover:underline truncate mt-0.5 text-left cursor-pointer block"
-                  >
-                    {String(lead.company_name || lead.company || '')}
-                  </button>
+                {lead.industry && (
+                  <p className="text-xs text-slate-500 truncate">{lead.industry}</p>
+                )}
+                {(lead.city || lead.country) && (
+                  <p className="text-xs text-emerald-500 truncate mt-0.5">
+                    {[lead.city, lead.country].filter(Boolean).join(', ')}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Social links */}
+            {/* Links */}
             <div className="flex items-center gap-2 mt-3">
-              {lead.linkedin && (
-                <a href={lead.linkedin} target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors"
-                  title="LinkedIn">
-                  <Share2 size={14} className="text-blue-600" />
-                </a>
-              )}
-              {lead.instagram && (
-                <a href={lead.instagram.startsWith('http') ? lead.instagram : `https://instagram.com/${lead.instagram.replace(/^@/, '')}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-pink-50 transition-colors"
-                  title="Instagram">
-                  <Camera size={14} className="text-pink-600" />
-                </a>
-              )}
-              {lead.facebook && (
-                <a href={lead.facebook.startsWith('http') ? lead.facebook : `https://facebook.com/${lead.facebook}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors"
-                  title="Facebook">
-                  <ThumbsUp size={14} className="text-blue-700" />
-                </a>
-              )}
-              {lead.twitter && (
-                <a href={lead.twitter.startsWith('http') ? lead.twitter : `https://x.com/${lead.twitter.replace(/^@/, '')}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-                  title="Twitter / X">
-                  <AtSign size={14} className="text-slate-800" />
-                </a>
-              )}
               {lead.website && (
                 <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                   target="_blank" rel="noreferrer"
                   className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
                   title="Website">
                   <Globe size={14} className="text-slate-600" />
+                </a>
+              )}
+              {lead.company_linkedin && (
+                <a href={lead.company_linkedin} target="_blank" rel="noreferrer"
+                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors"
+                  title="LinkedIn">
+                  <Share2 size={14} className="text-blue-600" />
+                </a>
+              )}
+              {lead.company_instagram && (
+                <a href={lead.company_instagram.startsWith('http') ? lead.company_instagram : `https://instagram.com/${lead.company_instagram.replace(/^@/, '')}`}
+                  target="_blank" rel="noreferrer"
+                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-pink-50 transition-colors"
+                  title="Instagram">
+                  <Camera size={14} className="text-pink-600" />
+                </a>
+              )}
+              {lead.company_facebook && (
+                <a href={lead.company_facebook.startsWith('http') ? lead.company_facebook : `https://facebook.com/${lead.company_facebook}`}
+                  target="_blank" rel="noreferrer"
+                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors"
+                  title="Facebook">
+                  <ThumbsUp size={14} className="text-blue-700" />
+                </a>
+              )}
+              {lead.company_twitter && (
+                <a href={lead.company_twitter.startsWith('http') ? lead.company_twitter : `https://x.com/${lead.company_twitter.replace(/^@/, '')}`}
+                  target="_blank" rel="noreferrer"
+                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                  title="Twitter / X">
+                  <AtSign size={14} className="text-slate-800" />
                 </a>
               )}
             </div>
@@ -300,64 +272,22 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
             <button className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs transition-colors">
               <StickyNote size={13} /> Note
             </button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs transition-colors">
-              <Tag size={13} /> Tag
-            </button>
           </div>
 
-          {/* Email Stats Bar */}
-          <div className="grid grid-cols-4 border-b border-slate-100">
-            <StatBox icon={Send} value={emailStats.sent} label="Sent" />
-            <StatBox icon={Eye} value={emailStats.opened} label="Opened" />
-            <StatBox icon={MousePointer} value={emailStats.clicked} label="Clicked" />
-            <StatBox icon={Reply} value={emailStats.replied} label="Replied" />
-          </div>
-
-          {/* Contact Details */}
+          {/* Company Details */}
           <div className="px-4 py-3 flex-1 overflow-y-auto">
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact Info</h4>
-            <InfoRow label="Email" value={lead.email} isLink />
-            {lead.personal_email && <InfoRow label="Personal Email" value={lead.personal_email} isLink />}
-            {lead.cc_email && <InfoRow label="CC Email" value={lead.cc_email} isLink />}
+            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Company Info</h4>
+            <InfoRow label="Company Name" value={lead.company_name} />
+            <InfoRow label="Industry" value={lead.industry} />
+            <InfoRow label="Size" value={lead.size} />
+            <InfoRow label="Website" value={lead.website} isLink />
             <InfoRow label="Phone" value={lead.phone} />
-            <InfoRow label="Email Status" value={lead.email_status} />
-            {lead.email_type && <InfoRow label="Email Type" value={lead.email_type} />}
-            <InfoRow label="Specialty" value={lead.specialty || ''} />
-            {lead.sub_specialties && <InfoRow label="Sub-specialties" value={lead.sub_specialties} />}
-            {lead.experience && <InfoRow label="Experience" value={lead.experience} />}
-            {lead.skills && <InfoRow label="Skills" value={lead.skills} />}
 
             <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Location</h4>
+            <InfoRow label="Location" value={lead.location} />
             <InfoRow label="City" value={lead.city} />
             <InfoRow label="State" value={lead.state} />
             <InfoRow label="Country" value={lead.country} />
-            {lead.street_address && <InfoRow label="Street Address" value={lead.street_address} />}
-            {lead.postal_code && <InfoRow label="Postal Code" value={lead.postal_code} />}
-
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Links</h4>
-            <InfoRow label="LinkedIn" value={lead.linkedin} isLink />
-            {lead.instagram && <InfoRow label="Instagram" value={lead.instagram} isLink />}
-            {lead.facebook && <InfoRow label="Facebook" value={lead.facebook} isLink />}
-            {lead.twitter && <InfoRow label="Twitter / X" value={lead.twitter} isLink />}
-            <InfoRow label="Website" value={lead.website} isLink />
-            <InfoRow label="Company Website" value={lead.company_website} isLink />
-            {lead.company_linkedin && <InfoRow label="Company LinkedIn" value={lead.company_linkedin} isLink />}
-            {lead.company_instagram && <InfoRow label="Company Instagram" value={lead.company_instagram} isLink />}
-            {lead.company_facebook && <InfoRow label="Company Facebook" value={lead.company_facebook} isLink />}
-            {lead.company_twitter && <InfoRow label="Company Twitter" value={lead.company_twitter} isLink />}
-            {lead.detail_page_url && <InfoRow label="Detail Page" value={lead.detail_page_url} isLink />}
-
-            {(lead.star_rating || lead.premium_badge || lead.company_size || lead.lead_quality_remarks) && (
-              <>
-                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Ratings & Quality</h4>
-                {lead.star_rating && (
-                  <InfoRow label="Star Rating" value={`${lead.star_rating}${lead.number_of_reviews ? ` (${lead.number_of_reviews} reviews)` : ''}`} />
-                )}
-                {lead.premium_badge && <InfoRow label="Premium Badge" value={lead.premium_badge} />}
-                {lead.company_size && <InfoRow label="Company Size" value={lead.company_size} />}
-                {lead.lead_quality_remarks && <InfoRow label="Quality Remarks" value={lead.lead_quality_remarks} />}
-              </>
-            )}
 
             <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Pipeline</h4>
             <div className="flex items-center gap-2 py-2">
@@ -373,10 +303,37 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
               </select>
             </div>
 
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Source</h4>
-            <InfoRow label="Source" value={lead.source} />
-            <InfoRow label="Instantly ID" value={lead.instantly_id} />
-            <InfoRow label="Notion URL" value={lead.notion_url} isLink />
+            {lead.notes && (
+              <>
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Notes</h4>
+                <p className="text-xs text-slate-700">{lead.notes}</p>
+              </>
+            )}
+
+            {/* Employees */}
+            {employees && employees.length > 0 && (
+              <>
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4 flex items-center gap-1.5">
+                  <Users size={11} />
+                  Employees ({employees.length})
+                </h4>
+                {employees.map((emp, idx) => {
+                  const empName = emp.full_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || 'Unknown'
+                  const label = employees.length === 1 ? 'Employee' : `Employee ${idx + 1}`
+                  return (
+                    <div key={emp.id} className="flex justify-between items-start py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-400">{label}</span>
+                      <button
+                        onClick={() => onOpenLead?.(emp)}
+                        className="text-xs text-blue-500 hover:text-blue-700 hover:underline truncate max-w-[200px] text-right"
+                      >
+                        {empName}
+                      </button>
+                    </div>
+                  )
+                })}
+              </>
+            )}
           </div>
         </div>
 
@@ -390,11 +347,10 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
                   activeTab === tab.key
-                    ? tab.key === 'ai' ? 'text-violet-600 border-violet-600' : 'text-blue-600 border-blue-600'
+                    ? 'text-blue-600 border-blue-600'
                     : 'text-slate-400 border-transparent hover:text-slate-600'
                 }`}
               >
-                {tab.icon && <tab.icon size={13} />}
                 {tab.label}
                 {tab.count !== undefined && (
                   <span className={`ml-1.5 text-xs ${activeTab === tab.key ? 'text-blue-400' : 'text-slate-300'}`}>
@@ -475,37 +431,8 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
                     </div>
                     <p className="text-sm font-medium text-slate-700">No Activities yet</p>
                     <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                      Your interactions will show up here once you start engaging with this prospect.
+                      Your interactions will show up here once you start engaging with this company.
                     </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Emails Tab ── */}
-            {activeTab === 'emails' && (
-              <div className="p-4">
-                {emailActivities.length > 0 ? (
-                  <div>
-                    {emailActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3 py-3 border-b border-slate-50">
-                        <div className="p-1.5 rounded-lg bg-blue-50 shrink-0">
-                          <Mail size={14} className="text-blue-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-700">{activity.description}</p>
-                          <p className="text-[10px] text-slate-400 mt-1">{formatDateTime(activity.created_at)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
-                      <Mail size={24} className="text-slate-300" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-700">No Emails yet</p>
-                    <p className="text-xs text-slate-400 mt-1">Email activity for this lead will appear here.</p>
                   </div>
                 )}
               </div>
@@ -534,15 +461,6 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
                     ))}
                 </div>
               </div>
-            )}
-
-            {/* ── AI Agent Tab ── */}
-            {activeTab === 'ai' && (
-              <AgentPanel
-                leadId={lead.id}
-                leadName={displayName}
-                leadEmail={lead.email}
-              />
             )}
           </div>
         </div>

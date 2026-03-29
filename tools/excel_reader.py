@@ -99,15 +99,12 @@ def read_leads(file_path: str, force: bool = False) -> dict[str, Any]:
         # Add IDs
         for row in companies_raw:
             row["id"] = _generate_id("company", row)
-            row["lead_type"] = "company"
 
         for row in contacts_raw:
             row["id"] = _generate_id("contact", row)
-            row["lead_type"] = "contact"
 
         for row in leads_raw:
             row["id"] = _generate_id("lead", row)
-            row["lead_type"] = "lead"
 
         _cache["companies"] = companies_raw
         _cache["contacts"] = contacts_raw

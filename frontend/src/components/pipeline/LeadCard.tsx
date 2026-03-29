@@ -1,5 +1,6 @@
 import { Building2, User, MapPin, Briefcase, Phone, Mail, Globe, Calendar, ExternalLink, Tag } from 'lucide-react'
-import type { Lead, Company } from '../../types'
+import type { Lead } from '../../types'
+import { isCompanyOnly } from '../../types'
 import type { CompanyField, LeadField } from './fieldConfig'
 
 const stageTagColors: Record<string, string> = {
@@ -55,8 +56,8 @@ export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFie
   const tagColor = stageTagColors[lead.stage] ?? 'bg-slate-100 text-slate-600'
 
   // ── Company card ──────────────────────────────────────────────────────────
-  if (lead.lead_type === 'company') {
-    const c = lead as Company
+  if (isCompanyOnly(lead)) {
+    const c = lead
     const show = (f: CompanyField) => !visibleCompanyFields || visibleCompanyFields.has(f)
     const location = [c.city, c.state, c.country].filter(Boolean).join(', ')
 
@@ -123,6 +124,9 @@ export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFie
   const phone = (raw.phone as string) || ''
   const location = [raw.city, raw.country].filter(Boolean).join(', ')
   const linkedin = (raw.linkedin as string) || ''
+  const instagram = (raw.instagram as string) || ''
+  const facebook = (raw.facebook as string) || ''
+  const twitter = (raw.twitter as string) || ''
   const source = (raw.source as string) || ''
   const notionUrl = (raw.notion_url as string) || ''
 
@@ -163,6 +167,15 @@ export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFie
         )}
         {show('linkedin') && linkedin && (
           <Row icon={<ExternalLink size={10} />} text="LinkedIn" link={linkedin} />
+        )}
+        {show('instagram') && instagram && (
+          <Row icon={<ExternalLink size={10} />} text="Instagram" link={instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram.replace(/^@/, '')}`} />
+        )}
+        {show('facebook') && facebook && (
+          <Row icon={<ExternalLink size={10} />} text="Facebook" link={facebook.startsWith('http') ? facebook : `https://facebook.com/${facebook}`} />
+        )}
+        {show('twitter') && twitter && (
+          <Row icon={<ExternalLink size={10} />} text="Twitter" link={twitter.startsWith('http') ? twitter : `https://x.com/${twitter.replace(/^@/, '')}`} />
         )}
         {show('notion_url') && notionUrl && (
           <Row icon={<ExternalLink size={10} />} text="Notion" link={notionUrl} />

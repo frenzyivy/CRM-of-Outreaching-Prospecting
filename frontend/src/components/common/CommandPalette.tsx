@@ -4,8 +4,8 @@ import {
   Search, LayoutDashboard, Kanban, Users, Mail, Phone, MessageCircle,
   BarChart3, DollarSign, CalendarDays, Plug, User,
 } from 'lucide-react'
-import { useLeadsData } from '../../hooks/useLeads'
-import type { LeadRecord } from '../../types'
+import { useAllLeads } from '../../hooks/useLeads'
+import type { Lead } from '../../types'
 import LeadScoreBadge from './LeadScoreBadge'
 
 const pages = [
@@ -27,7 +27,7 @@ export default function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const { data: leads } = useLeadsData()
+  const { data: leads } = useAllLeads()
 
   // Global keyboard listener
   useEffect(() => {
@@ -60,11 +60,11 @@ export default function CommandPalette() {
     : pages
 
   // Filter leads (client-side, up to 10 results)
-  const matchedLeads: LeadRecord[] = q.length >= 2
+  const matchedLeads: Lead[] = q.length >= 2
     ? (leads || []).filter((l) =>
         l.full_name?.toLowerCase().includes(q) ||
         l.email?.toLowerCase().includes(q) ||
-        l.company?.toLowerCase().includes(q)
+        l.company_name?.toLowerCase().includes(q)
       ).slice(0, 10)
     : []
 
@@ -174,7 +174,7 @@ export default function CommandPalette() {
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{name || lead.email}</span>
                         {lead.lead_tier && <LeadScoreBadge score={lead.lead_score ?? 0} tier={lead.lead_tier} />}
                       </div>
-                      <p className="text-xs text-slate-400 truncate">{lead.company || lead.email}</p>
+                      <p className="text-xs text-slate-400 truncate">{lead.company_name || lead.email}</p>
                     </div>
                   </button>
                 )

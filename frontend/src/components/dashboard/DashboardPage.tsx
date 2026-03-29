@@ -87,14 +87,14 @@ export default function DashboardPage() {
         />
         <EnhancedStatCard
           title="Revenue"
-          value={stats.revenue_generated > 0 ? `$${stats.revenue_generated.toLocaleString()}` : '—'}
+          value={stats.revenue_generated > 0 ? `₹${stats.revenue_generated.toLocaleString()}` : '—'}
           icon={DollarSign}
           color="bg-rose-500"
           subtitle="Generated"
         />
         <EnhancedStatCard
           title="Total Spent"
-          value={stats.total_spent > 0 ? `$${stats.total_spent.toLocaleString()}` : '—'}
+          value={stats.total_spent > 0 ? `₹${stats.total_spent.toLocaleString()}` : '—'}
           icon={CreditCard}
           color="bg-orange-500"
           subtitle="Tools + API"

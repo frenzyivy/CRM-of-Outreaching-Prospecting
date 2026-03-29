@@ -5,6 +5,7 @@ import { useUpdateStage, useLogActivity } from '../../hooks/usePipeline'
 import Badge from '../common/Badge'
 import { formatDateTime } from '../../lib/utils'
 import type { Lead } from '../../types'
+import { isCompanyOnly } from '../../types'
 
 const STAGES = [
   { value: 'new', label: 'New' },
@@ -32,7 +33,7 @@ interface Props {
 }
 
 export default function LeadDetailModal({ lead, onClose }: Props) {
-  const { data: detail } = useLeadDetail(lead.lead_type, lead.id)
+  const { data: detail } = useLeadDetail(lead.id)
   const updateStage = useUpdateStage()
   const logActivity = useLogActivity()
   const [activityType, setActivityType] = useState<'email' | 'call' | 'note'>('email')
@@ -42,23 +43,22 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
   const activities = detail?.activities || []
 
   const handleStageChange = (stage: string) => {
-    updateStage.mutate({ leadType: lead.lead_type, leadId: lead.id, stage })
+    updateStage.mutate({ leadId: lead.id, stage })
   }
 
   const handleLogActivity = () => {
     if (!description.trim()) return
     logActivity.mutate({
-      lead_type: lead.lead_type,
-      lead_key: lead.id,
+      lead_id: lead.id,
       activity_type: activityType,
       description,
     })
     setDescription('')
   }
 
-  const name = lead.lead_type === 'company'
-    ? (displayLead as { company_name?: string }).company_name
-    : `${(displayLead as { first_name?: string }).first_name} ${(displayLead as { last_name?: string }).last_name}`
+  const name = isCompanyOnly(lead)
+    ? displayLead.company_name
+    : `${displayLead.first_name || ''} ${displayLead.last_name || ''}`.trim() || displayLead.full_name
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-start justify-center pt-20 z-50" onClick={onClose}>
@@ -70,7 +70,7 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
-            <p className="text-sm text-slate-500 capitalize">{lead.lead_type}</p>
+            <p className="text-sm text-slate-500 capitalize">{isCompanyOnly(lead) ? 'Company' : 'Contact'}</p>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded">
             <X size={18} />

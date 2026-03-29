@@ -47,11 +47,17 @@ def get_lead_context(lead_id: str) -> dict:
         "country": lead.get("country", ""),
         "website": lead.get("website") or lead.get("company_website", ""),
         "linkedin": lead.get("linkedin", ""),
+        "instagram": lead.get("instagram", ""),
+        "facebook": lead.get("facebook", ""),
+        "twitter": lead.get("twitter", ""),
+        "company_linkedin": lead.get("company_linkedin", ""),
+        "company_instagram": lead.get("company_instagram", ""),
+        "company_facebook": lead.get("company_facebook", ""),
+        "company_twitter": lead.get("company_twitter", ""),
         "stage": lead.get("stage", "new"),
         "stage_label": lead.get("stage_label", "New"),
         "lead_score": lead.get("lead_score", 0),
         "lead_tier": lead.get("lead_tier", "cold"),
-        "lead_type": lead.get("lead_type", "lead"),
         # Email engagement
         "email_opens": lead.get("email_opens", 0),
         "email_replies": lead.get("email_replies", 0),
@@ -97,8 +103,22 @@ def format_lead_brief(context: dict) -> str:
         lines.append(f"Email: {context['email']}")
     if context["linkedin"]:
         lines.append(f"LinkedIn: {context['linkedin']}")
+    if context.get("instagram"):
+        lines.append(f"Instagram: {context['instagram']}")
+    if context.get("facebook"):
+        lines.append(f"Facebook: {context['facebook']}")
+    if context.get("twitter"):
+        lines.append(f"Twitter/X: {context['twitter']}")
     if context["website"]:
         lines.append(f"Website: {context['website']}")
+    if context.get("company_linkedin"):
+        lines.append(f"Company LinkedIn: {context['company_linkedin']}")
+    if context.get("company_instagram"):
+        lines.append(f"Company Instagram: {context['company_instagram']}")
+    if context.get("company_facebook"):
+        lines.append(f"Company Facebook: {context['company_facebook']}")
+    if context.get("company_twitter"):
+        lines.append(f"Company Twitter/X: {context['company_twitter']}")
 
     lines.append(f"Pipeline Stage: {context['stage_label']}")
     lines.append(f"Lead Score: {context['lead_score']}/100 ({context['lead_tier']})")

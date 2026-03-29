@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { useCompanies } from '../../hooks/useLeads'
+import { useCompanyView } from '../../hooks/useLeads'
 import Badge from '../common/Badge'
-import type { Company } from '../../types'
+import type { Lead } from '../../types'
 
 interface Props {
-  onSelect: (lead: Company) => void
+  onSelect: (lead: Lead, filteredCompanies?: Lead[]) => void
 }
 
 export default function CompanyTable({ onSelect }: Props) {
-  const { data: companies, isLoading } = useCompanies()
+  const { data: companies, isLoading } = useCompanyView()
   const [search, setSearch] = useState('')
 
   const filtered = (companies || []).filter((c) => {
@@ -17,7 +17,7 @@ export default function CompanyTable({ onSelect }: Props) {
     return (
       c.company_name?.toLowerCase().includes(q) ||
       c.industry?.toLowerCase().includes(q) ||
-      c.location?.toLowerCase().includes(q)
+      c.country?.toLowerCase().includes(q)
     )
   })
 
@@ -54,7 +54,7 @@ export default function CompanyTable({ onSelect }: Props) {
             {filtered.map((company) => (
               <tr
                 key={company.id}
-                onClick={() => onSelect(company)}
+                onClick={() => onSelect(company, filtered)}
                 className="hover:bg-slate-50 cursor-pointer transition-colors"
               >
                 <td className="px-4 py-3">
@@ -64,8 +64,8 @@ export default function CompanyTable({ onSelect }: Props) {
                   )}
                 </td>
                 <td className="px-4 py-3 text-slate-600">{company.industry}</td>
-                <td className="px-4 py-3 text-slate-600">{company.size}</td>
-                <td className="px-4 py-3 text-slate-600">{company.location}</td>
+                <td className="px-4 py-3 text-slate-600">{company.company_size || '—'}</td>
+                <td className="px-4 py-3 text-slate-600">{[company.city, company.country].filter(Boolean).join(', ') || '—'}</td>
                 <td className="px-4 py-3">
                   <Badge stage={company.stage} label={company.stage_label} />
                 </td>

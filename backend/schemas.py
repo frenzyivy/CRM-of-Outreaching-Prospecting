@@ -2,6 +2,8 @@
 Pydantic request/response models for all API endpoints.
 """
 
+from datetime import date as date_type
+
 from pydantic import BaseModel
 
 
@@ -24,8 +26,23 @@ class SyncPushRequest(BaseModel):
 class ExpenseCreate(BaseModel):
     name: str
     category: str = "tool"  # tool, api, salary, other
-    amount: float
+    base_amount: float
+    tax: float = 0
+    commission: float = 0
+    original_usd: float | None = None
+    payment_date: date_type  # required
     period: str = "monthly"  # monthly, yearly, one-time
+
+
+class ExpenseUpdate(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    base_amount: float | None = None
+    tax: float | None = None
+    commission: float | None = None
+    original_usd: float | None = None
+    payment_date: date_type | None = None
+    period: str | None = None
 
 
 class IntegrationConnectRequest(BaseModel):

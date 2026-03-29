@@ -1,88 +1,65 @@
-export interface Company {
+export interface Lead {
   id: string
-  lead_type: 'company'
-  company_name: string
-  industry: string
-  city: string
-  state: string
-  country: string
-  website: string
-  phone: string
-  notes: string
-  size?: string
-  location?: string
-  stage: string
-  stage_label: string
-  created_at?: string
-}
-
-export interface Contact {
-  id: string
-  lead_type: 'contact'
-  first_name: string
-  last_name: string
-  full_name: string
-  title: string
-  email: string
-  phone: string
-  company_name: string
-  company?: string
-  linkedin: string
-  notes: string
-  city: string
-  state: string
-  country: string
-  industry: string
-  website: string
-  source: string
-  stage: string
-  stage_label: string
-  created_at?: string
-}
-
-export interface LeadRecord {
-  id: string
-  lead_type: 'lead'
-  source: string
-  full_name: string
-  first_name: string
-  last_name: string
-  job_title: string
-  company: string
-  email: string
-  personal_email: string
-  cc_email: string
-  email_status: string
-  phone: string
-  linkedin: string
-  instagram: string
-  facebook: string
-  twitter: string
-  website: string
-  company_website: string
-  company_domain: string
-  industry: string
-  city: string
-  state: string
-  country: string
-  current_stage: string
-  notion_url: string
-  instantly_id: string
-  company_data_available: string
-  matched_company_name: string
+  // Person fields
+  first_name?: string
+  last_name?: string
+  full_name?: string
+  title?: string
+  email?: string
+  phone?: string
+  linkedin?: string
+  instagram?: string
+  facebook?: string
+  twitter?: string
+  // Company fields
+  company_name?: string
+  industry?: string
+  website?: string
+  company_website?: string
+  company_linkedin?: string
+  company_instagram?: string
+  company_facebook?: string
+  company_twitter?: string
+  company_size?: string
+  // Location
+  city?: string
+  state?: string
+  country?: string
+  street_address?: string
+  postal_code?: string
+  // Extended
+  source?: string
+  notes?: string
+  email_status?: string
+  email_type?: string
+  specialty?: string
+  sub_specialties?: string
+  star_rating?: string
+  number_of_reviews?: string
+  lead_quality_remarks?: string
+  premium_badge?: string
+  detail_page_url?: string
+  experience?: string
+  skills?: string
+  // Pipeline & scoring
   stage: string
   stage_label: string
   lead_score?: number
   lead_tier?: 'hot' | 'warm' | 'cold'
   created_at?: string
+  // Extra fields from various sources (kept for compatibility)
+  raw_data?: Record<string, unknown>
+  [key: string]: unknown
 }
 
-export type Lead = Company | Contact | LeadRecord
+// Helper functions for detecting record type by field presence
+export const isCompanyOnly = (lead: Lead) => !!lead.company_name && !lead.first_name && !lead.full_name
+export const hasPersonData = (lead: Lead) => !!lead.first_name || !!lead.full_name
+export const hasCompanyData = (lead: Lead) => !!lead.company_name
 
 export interface Activity {
   id: number
-  lead_type: string
-  lead_key: string
+  lead_id: string
   activity_type: 'email' | 'call' | 'note' | 'stage_change'
   description: string
   created_at: string
