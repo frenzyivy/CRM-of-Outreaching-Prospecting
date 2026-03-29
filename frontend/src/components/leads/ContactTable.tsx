@@ -12,13 +12,13 @@ export default function ContactTable({ onSelect }: Props) {
   const { data: contacts, isLoading } = useContacts()
   const [search, setSearch] = useState('')
 
-  const filtered = (contacts || []).filter((c) => {
+  const filtered = (contacts || []).filter((c: Contact) => {
     const q = search.toLowerCase()
     return (
       c.first_name?.toLowerCase().includes(q) ||
       c.last_name?.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q) ||
-      c.company?.toLowerCase().includes(q) ||
+      c.company_name?.toLowerCase().includes(q) ||
       c.title?.toLowerCase().includes(q)
     )
   })
@@ -53,7 +53,7 @@ export default function ContactTable({ onSelect }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filtered.map((contact) => (
+            {filtered.map((contact: Contact) => (
               <tr
                 key={contact.id}
                 onClick={() => onSelect(contact)}
@@ -65,7 +65,7 @@ export default function ContactTable({ onSelect }: Props) {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-slate-600">{contact.title}</td>
-                <td className="px-4 py-3 text-slate-600">{contact.company}</td>
+                <td className="px-4 py-3 text-slate-600">{contact.company_name}</td>
                 <td className="px-4 py-3 text-slate-500 text-xs">{contact.email}</td>
                 <td className="px-4 py-3">
                   <Badge stage={contact.stage} label={contact.stage_label} />

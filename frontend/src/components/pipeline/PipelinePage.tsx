@@ -90,11 +90,6 @@ export default function PipelinePage() {
   const [visibleCompanyFields, setVisibleCompanyFields] = useState<Set<CompanyField>>(loadCompanyFields)
   const [visibleLeadFields, setVisibleLeadFields] = useState<Set<LeadField>>(loadLeadFields)
 
-  function handleCompanyFieldsChange(next: Set<CompanyField>) {
-    setVisibleCompanyFields(next)
-    saveCompanyFields(next)
-  }
-
   function handleLeadFieldsChange(next: Set<LeadField>) {
     setVisibleLeadFields(next)
     saveLeadFields(next)

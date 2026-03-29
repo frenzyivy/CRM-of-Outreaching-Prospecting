@@ -52,6 +52,8 @@ export interface Lead {
   [key: string]: unknown
 }
 
+export type Contact = Lead
+
 // Helper functions for detecting record type by field presence
 export const isCompanyOnly = (lead: Lead) => !!lead.company_name && !lead.first_name && !lead.full_name
 export const hasPersonData = (lead: Lead) => !!lead.first_name || !!lead.full_name

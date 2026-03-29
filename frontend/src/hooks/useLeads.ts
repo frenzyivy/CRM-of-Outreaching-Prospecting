@@ -23,6 +23,13 @@ export function usePeopleView() {
   })
 }
 
+export function useContacts() {
+  return useQuery<Lead[]>({
+    queryKey: ['leads', 'contacts'],
+    queryFn: async () => (await api.get('/leads/people-view')).data,
+  })
+}
+
 export function useLeadDetail(leadId: string) {
   return useQuery<Lead & { activities: Activity[] }>({
     queryKey: ['lead', leadId],
