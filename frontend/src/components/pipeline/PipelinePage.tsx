@@ -10,7 +10,7 @@ import { isCompanyOnly } from '../../types'
 import type { CompanyField, LeadField } from './fieldConfig'
 import {
   loadCompanyFields, loadLeadFields,
-  saveCompanyFields, saveLeadFields,
+  saveLeadFields,
 } from './fieldConfig'
 
 // ── Board ────────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ export default function PipelinePage() {
   const [search, setSearch] = useState('')
 
   // Field visibility — loaded from localStorage, persisted on change
-  const [visibleCompanyFields, setVisibleCompanyFields] = useState<Set<CompanyField>>(loadCompanyFields)
+  const [visibleCompanyFields] = useState<Set<CompanyField>>(loadCompanyFields)
   const [visibleLeadFields, setVisibleLeadFields] = useState<Set<LeadField>>(loadLeadFields)
 
   function handleLeadFieldsChange(next: Set<LeadField>) {
