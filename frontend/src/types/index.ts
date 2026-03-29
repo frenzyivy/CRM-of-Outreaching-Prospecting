@@ -27,9 +27,19 @@ export interface Lead {
   country?: string
   street_address?: string
   postal_code?: string
+  // Contact extended
+  personal_email?: string
+  cc_email?: string
+  job_title?: string
+  company?: string
+  // Company extended
+  size?: string
+  location?: string
   // Extended
   source?: string
   notes?: string
+  instantly_id?: string
+  notion_url?: string
   email_status?: string
   email_type?: string
   specialty?: string
@@ -53,6 +63,7 @@ export interface Lead {
 }
 
 export type Contact = Lead
+export type Company = Lead
 
 // Helper functions for detecting record type by field presence
 export const isCompanyOnly = (lead: Lead) => !!lead.company_name && !lead.first_name && !lead.full_name

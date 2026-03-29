@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  X, ChevronLeft, ChevronRight, Building2, Globe, Phone,
+  X, ChevronLeft, ChevronRight, Globe, Phone,
   Mail, StickyNote, Tag, MoreVertical, Calendar,
   ExternalLink, Users, Share2, Camera, ThumbsUp, AtSign
 } from 'lucide-react'
@@ -48,8 +48,9 @@ interface Props {
   onOpenLead?: (lead: Lead) => void
 }
 
-function InfoRow({ label, value, isLink }: { label: string; value?: string; isLink?: boolean }) {
-  if (!value || value === '-' || value === 'undefined' || value === 'null') {
+function InfoRow({ label, value, isLink }: { label: string; value?: string | unknown; isLink?: boolean }) {
+  const strValue = value == null ? '' : String(value)
+  if (!strValue || strValue === '-' || strValue === 'undefined' || strValue === 'null') {
     return (
       <div className="flex justify-between items-start py-2 border-b border-slate-50">
         <span className="text-xs text-slate-400">{label}</span>
@@ -61,13 +62,13 @@ function InfoRow({ label, value, isLink }: { label: string; value?: string; isLi
     <div className="flex justify-between items-start py-2 border-b border-slate-50 gap-4">
       <span className="text-xs text-slate-400 shrink-0">{label}</span>
       {isLink ? (
-        <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noreferrer"
+        <a href={strValue.startsWith('http') ? strValue : `https://${strValue}`} target="_blank" rel="noreferrer"
           className="text-xs text-blue-500 hover:text-blue-600 truncate max-w-[200px] flex items-center gap-1">
-          {value.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}
+          {strValue.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}
           <ExternalLink size={10} className="shrink-0" />
         </a>
       ) : (
-        <span className="text-xs text-slate-700 text-right truncate max-w-[200px]">{value}</span>
+        <span className="text-xs text-slate-700 text-right truncate max-w-[200px]">{strValue}</span>
       )}
     </div>
   )
