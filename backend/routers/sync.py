@@ -1,21 +1,73 @@
-"""Sync & Instantly webhook endpoints."""
+"""Sync endpoints (campaign listing, preview & lead push to Instantly)."""
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter
 
-from core.supabase_client import update_email_engagement, get_unsynced_leads
+from core.supabase_client import get_unsynced_leads, get_client
 from integrations.instantly import invalidate_cache
 from tools.lead_ingestion import get_campaigns_for_selection, _push_to_instantly
 from backend.schemas import SyncPushRequest
 
-router = APIRouter(tags=["sync"])
+router = APIRouter(prefix="/api/sync", tags=["sync"])
 
 
-@router.get("/api/sync/campaigns")
+@router.get("/preview")
+def sync_preview():
+    """Show unsynced leads that can be pushed to Instantly."""
+    try:
+        unsynced = get_unsynced_leads()
+
+        # Count total leads with email and already-synced leads
+        db = get_client()
+        total_result = db.table("leads").select(
+            "id", count="exact"
+        ).neq("email", "").not_.is_("email", "null").execute()
+        total_with_email = total_result.count or 0
+
+        synced_result = db.table("leads").select(
+            "id", count="exact"
+        ).eq("instantly_synced", True).execute()
+        already_synced = synced_result.count or 0
+
+        # Build contact preview list
+        missing_contacts = []
+        for lead in unsynced:
+            missing_contacts.append({
+                "email": lead.get("email", ""),
+                "first_name": lead.get("first_name", ""),
+                "last_name": lead.get("last_name", ""),
+                "company": lead.get("company_name", ""),
+                "title": lead.get("title") or lead.get("job_title", ""),
+                "phone": lead.get("phone", ""),
+                "linkedin": lead.get("linkedin", ""),
+                "notes": lead.get("notes", ""),
+                "valid": bool(lead.get("email")),
+            })
+
+        return {
+            "missing_contacts": missing_contacts,
+            "excel_total": total_with_email,
+            "instantly_total": already_synced + len(unsynced),
+            "already_synced": already_synced,
+            "missing_count": len(unsynced),
+            "error": None,
+        }
+    except Exception as e:
+        return {
+            "missing_contacts": [],
+            "excel_total": 0,
+            "instantly_total": 0,
+            "already_synced": 0,
+            "missing_count": 0,
+            "error": str(e),
+        }
+
+
+@router.get("/campaigns")
 def sync_campaigns():
     return get_campaigns_for_selection()
 
 
-@router.post("/api/sync/push")
+@router.post("/push")
 def sync_push(body: SyncPushRequest):
     """Push unsynced Supabase leads to an Instantly campaign."""
     unsynced = get_unsynced_leads()
@@ -34,45 +86,3 @@ def sync_push(body: SyncPushRequest):
     invalidate_cache()
 
     return {"pushed": pushed, "failed": len(lead_ids) - pushed, "errors": errors}
-
-
-@router.post("/api/webhooks/instantly")
-async def instantly_webhook(request: Request):
-    """
-    Receives webhook events from Instantly.ai.
-    Updates lead engagement data in Supabase.
-    """
-    try:
-        payload = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
-
-    event_type = payload.get("event_type", "").lower()
-    email = (
-        payload.get("lead_email")
-        or payload.get("email")
-        or payload.get("to_email")
-        or ""
-    )
-
-    if not email:
-        return {"status": "ignored", "reason": "no email in payload"}
-
-    event_map = {
-        "email_opened": "open",
-        "email_replied": "reply",
-        "email_bounced": "bounce",
-        "link_clicked": "click",
-        "open": "open",
-        "reply": "reply",
-        "bounce": "bounce",
-        "click": "click",
-    }
-
-    our_event = event_map.get(event_type)
-    if not our_event:
-        return {"status": "ignored", "reason": f"unknown event_type: {event_type}"}
-
-    update_email_engagement(email, our_event)
-
-    return {"status": "ok", "event": our_event, "email": email}

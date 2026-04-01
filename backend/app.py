@@ -27,6 +27,7 @@ from backend.routers import (
     revenue,
     notifications,
     search,
+    webhooks,
 )
 
 load_dotenv()
@@ -83,3 +84,6 @@ app.include_router(whatsapp.router, dependencies=auth_dep)
 app.include_router(revenue.router, dependencies=auth_dep)
 app.include_router(notifications.router, dependencies=auth_dep)
 app.include_router(search.router, dependencies=auth_dep)
+
+# Webhooks — NO auth (called by external services like Instantly.ai and Meta/WhatsApp)
+app.include_router(webhooks.router)

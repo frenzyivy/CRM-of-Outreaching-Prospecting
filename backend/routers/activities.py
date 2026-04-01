@@ -10,8 +10,8 @@ router = APIRouter(prefix="/api/activities", tags=["activities"])
 
 @router.post("")
 def create_activity(body: ActivityCreate):
-    if body.activity_type not in ("email", "call", "note"):
-        raise HTTPException(status_code=400, detail="activity_type must be email, call, or note")
+    if body.activity_type not in ("email", "call", "note", "stage_change", "whatsapp"):
+        raise HTTPException(status_code=400, detail="activity_type must be email, call, note, stage_change, or whatsapp")
 
     activity_id = log_activity(body.lead_id, body.activity_type, body.description)
     return {"status": "ok", "activity_id": activity_id}

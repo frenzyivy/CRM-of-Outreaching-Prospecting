@@ -73,7 +73,7 @@ export const hasCompanyData = (lead: Lead) => !!lead.company_name
 export interface Activity {
   id: number
   lead_id: string
-  activity_type: 'email' | 'call' | 'note' | 'stage_change'
+  activity_type: 'email' | 'call' | 'note' | 'stage_change' | 'whatsapp'
   description: string
   created_at: string
 }
