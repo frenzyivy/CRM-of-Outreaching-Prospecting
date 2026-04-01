@@ -58,3 +58,41 @@ class WhatsAppSendRequest(BaseModel):
     to_phone: str
     message: str
     lead_id: str | None = None
+
+
+# --- AI Agent request models ---
+
+class DraftEmailRequest(BaseModel):
+    lead_id: str
+    custom_instructions: str = ""
+    model: str | None = None
+
+
+class FollowUpRequest(BaseModel):
+    lead_id: str
+    follow_up_number: int = 1
+    previous_emails: str = ""
+    custom_instructions: str = ""
+    model: str | None = None
+
+
+class LinkedInPostRequest(BaseModel):
+    topic: str
+    style: str = "thought leadership"
+    custom_instructions: str = ""
+    model: str | None = None
+
+
+class CopywritingRequest(BaseModel):
+    content_type: str  # landing_page, ad_copy, case_study, website_section
+    topic: str
+    audience: str = "healthcare decision-makers"
+    custom_instructions: str = ""
+    model: str | None = None
+
+
+class FreeformRequest(BaseModel):
+    prompt: str
+    lead_id: str | None = None
+    system: str = ""
+    model: str | None = None

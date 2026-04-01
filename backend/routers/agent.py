@@ -1,49 +1,17 @@
 """AI Agent API endpoints — email drafting, content generation, lead research."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 from core.llm import is_configured as llm_configured, get_status as llm_status
+from backend.schemas import (
+    DraftEmailRequest,
+    FollowUpRequest,
+    LinkedInPostRequest,
+    CopywritingRequest,
+    FreeformRequest,
+)
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
-
-
-# --- Request models ---
-
-class DraftEmailRequest(BaseModel):
-    lead_id: str
-    custom_instructions: str = ""
-    model: str | None = None
-
-
-class FollowUpRequest(BaseModel):
-    lead_id: str
-    follow_up_number: int = 1
-    previous_emails: str = ""
-    custom_instructions: str = ""
-    model: str | None = None
-
-
-class LinkedInPostRequest(BaseModel):
-    topic: str
-    style: str = "thought leadership"
-    custom_instructions: str = ""
-    model: str | None = None
-
-
-class CopywritingRequest(BaseModel):
-    content_type: str  # landing_page, ad_copy, case_study, website_section
-    topic: str
-    audience: str = "healthcare decision-makers"
-    custom_instructions: str = ""
-    model: str | None = None
-
-
-class FreeformRequest(BaseModel):
-    prompt: str
-    lead_id: str | None = None
-    system: str = ""
-    model: str | None = None
 
 
 # --- Endpoints ---

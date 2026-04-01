@@ -141,7 +141,6 @@ export default function SyncTab() {
           {pushMutation.data.errors.length > 0 ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
           <span>
             Pushed <strong>{pushMutation.data.pushed}</strong> leads.
-            {pushMutation.data.skipped > 0 && ` Skipped ${pushMutation.data.skipped} (invalid email).`}
             {pushMutation.data.failed > 0 && ` Failed: ${pushMutation.data.failed}.`}
             {pushMutation.data.errors.map((e, i) => (
               <span key={i} className="block text-xs mt-1">{e}</span>

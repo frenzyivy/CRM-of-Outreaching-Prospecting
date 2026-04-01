@@ -99,8 +99,6 @@ export interface DashboardStats {
   revenue_generated: number
   total_spent: number
   stage_counts: Record<string, number>
-  excel_last_modified: number
-  excel_error: string | null
 }
 
 export interface PipelineData {
@@ -348,7 +346,6 @@ export interface SyncCampaign {
 
 export interface SyncPushResult {
   pushed: number
-  skipped: number
   failed: number
   errors: string[]
 }
