@@ -1,8 +1,7 @@
-import { RefreshCw, Sun, Moon, Search } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { Sun, Moon, Search } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import NotificationBell from './NotificationBell'
+import SyncStatusBadge from './SyncStatusBadge'
 
 interface HeaderProps {
   title: string
@@ -11,15 +10,7 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle, action }: HeaderProps) {
-  const queryClient = useQueryClient()
-  const [spinning, setSpinning] = useState(false)
   const { resolvedTheme, setTheme } = useTheme()
-
-  const handleRefresh = () => {
-    setSpinning(true)
-    queryClient.invalidateQueries()
-    setTimeout(() => setSpinning(false), 1000)
-  }
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
@@ -50,13 +41,7 @@ export default function Header({ title, subtitle, action }: HeaderProps) {
         >
           {resolvedTheme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </button>
-        <button
-          onClick={handleRefresh}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors shadow-sm"
-        >
-          <RefreshCw size={13} className={spinning ? 'animate-spin' : ''} />
-          Refresh
-        </button>
+        <SyncStatusBadge />
       </div>
     </header>
   )
