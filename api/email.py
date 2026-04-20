@@ -1,5 +1,7 @@
 """Email API endpoints — Instantly.ai + multi-tool (ConvertKit, Lemlist, Smartlead)."""
 
+import os
+
 from fastapi import APIRouter, HTTPException, Query
 
 from integrations.esp.instantly import (
@@ -8,15 +10,36 @@ from integrations.esp.instantly import (
     fetch_campaign_analytics,
     fetch_daily_analytics,
 )
-from integrations.esp.convertkit import get_campaigns as ck_campaigns, get_daily_stats as ck_daily
-from integrations.esp.lemlist import get_campaigns as ll_campaigns, get_daily_stats as ll_daily
-from integrations.esp.smartlead import get_campaigns as sl_campaigns, get_daily_stats as sl_daily
+from integrations.esp.convertkit import (
+    get_campaigns as ck_campaigns,
+    get_daily_stats as ck_daily,
+    get_account_quota as ck_quota,
+)
+from integrations.esp.lemlist import (
+    get_campaigns as ll_campaigns,
+    get_daily_stats as ll_daily,
+    get_account_quota as ll_quota,
+)
+from integrations.esp.smartlead import (
+    get_campaigns as sl_campaigns,
+    get_daily_stats as sl_daily,
+    get_account_quota as sl_quota,
+)
 
+# Dispatch tables for multi-tool routes.
 TOOL_DISPATCH = {
     "convertkit": (ck_campaigns, ck_daily),
     "lemlist":    (ll_campaigns, ll_daily),
     "smartlead":  (sl_campaigns, sl_daily),
 }
+
+# Per-tool metadata (name + quota fn + env var for connected check).
+# Ordered to match how the legacy all/overview response sorted tools.
+TOOL_META = [
+    ("convertkit", "ConvertKit", ck_quota,  "CONVERTKIT_API_KEY"),
+    ("lemlist",    "Lemlist",    ll_quota,  "LEMLIST_API_KEY"),
+    ("smartlead",  "Smartlead",  sl_quota,  "SMARTLEAD_API_KEY"),
+]
 
 router = APIRouter(prefix="/api/email", tags=["email"])
 
@@ -128,6 +151,99 @@ def email_campaign_detail(
         "summary": summary,
         "sequence_steps": steps,
         "daily": daily,
+    }
+
+
+# ===========================================================================
+# Multi-tool cross-platform overview routes
+# Literal paths — must stay ABOVE the /{tool}/... catch-alls at the bottom.
+# ===========================================================================
+
+@router.get("/tools")
+def email_tools_status():
+    """List all email tools and their connection status (based on env API keys)."""
+    tools = [
+        {"id": "instantly",  "name": "Instantly.ai", "connected": bool(os.getenv("INSTANTLY_API_KEY",  "").strip())},
+        {"id": "convertkit", "name": "ConvertKit",   "connected": bool(os.getenv("CONVERTKIT_API_KEY", "").strip())},
+        {"id": "lemlist",    "name": "Lemlist",      "connected": bool(os.getenv("LEMLIST_API_KEY",    "").strip())},
+        {"id": "smartlead",  "name": "Smartlead",    "connected": bool(os.getenv("SMARTLEAD_API_KEY",  "").strip())},
+    ]
+    return {"tools": tools}
+
+
+@router.get("/all/overview")
+def all_tools_overview():
+    """Combined stats across all 4 email tools for the Overview tab."""
+    instantly_data = get_all_instantly_data()
+    instantly_ov = instantly_data.get("overview", {})
+
+    results = []
+
+    # Instantly (special case — uses get_all_instantly_data instead of get_account_quota)
+    inst_sent = instantly_ov.get("emails_sent", 0) or 0
+    results.append({
+        "tool": "instantly",
+        "name": "Instantly.ai",
+        "connected": bool(os.getenv("INSTANTLY_API_KEY", "").strip()),
+        "quota": {
+            "plan_name": "Hypergrowth",
+            "emails_sent": inst_sent,
+            "emails_remaining": None,
+            "contacts_used": instantly_ov.get("leads_count", 0),
+            "contacts_max": None,
+            "reset_date": None,
+            "connected": bool(os.getenv("INSTANTLY_API_KEY", "").strip()),
+        },
+        "aggregate": {
+            "emails_sent": inst_sent,
+            "open_rate":   instantly_ov.get("open_rate",   0),
+            "reply_rate":  instantly_ov.get("reply_rate",  0),
+            "click_rate":  instantly_ov.get("click_rate",  0),
+            "bounce_rate": instantly_ov.get("bounce_rate", 0),
+        },
+    })
+
+    # Other tools — uniform via TOOL_META dispatch
+    for tool_id, name, quota_fn, env_key in TOOL_META:
+        quota = quota_fn()
+        _get_campaigns, _ = TOOL_DISPATCH[tool_id]
+        campaigns = _get_campaigns()
+        total_sent    = sum(c.get("sent", 0) for c in campaigns)
+        total_opens   = sum(c.get("sent", 0) * c.get("open_rate",   0) / 100 for c in campaigns)
+        total_replies = sum(c.get("sent", 0) * c.get("reply_rate",  0) / 100 for c in campaigns)
+        total_clicks  = sum(c.get("sent", 0) * c.get("click_rate",  0) / 100 for c in campaigns)
+        total_bounces = sum(c.get("sent", 0) * c.get("bounce_rate", 0) / 100 for c in campaigns)
+        results.append({
+            "tool": tool_id,
+            "name": name,
+            "connected": quota.get("connected", False),
+            "quota": quota,
+            "aggregate": {
+                "emails_sent": total_sent,
+                "open_rate":   round(total_opens   / max(total_sent, 1) * 100, 1),
+                "reply_rate":  round(total_replies / max(total_sent, 1) * 100, 1),
+                "click_rate":  round(total_clicks  / max(total_sent, 1) * 100, 1),
+                "bounce_rate": round(total_bounces / max(total_sent, 1) * 100, 1),
+            },
+        })
+
+    # Grand totals
+    grand_sent    = sum(r["aggregate"]["emails_sent"] for r in results)
+    grand_opens   = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["open_rate"]   / 100 for r in results)
+    grand_replies = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["reply_rate"]  / 100 for r in results)
+    grand_clicks  = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["click_rate"]  / 100 for r in results)
+    grand_bounces = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["bounce_rate"] / 100 for r in results)
+
+    return {
+        "tools": results,
+        "grand_total": {
+            "emails_sent": grand_sent,
+            "open_rate":   round(grand_opens   / max(grand_sent, 1) * 100, 1),
+            "reply_rate":  round(grand_replies / max(grand_sent, 1) * 100, 1),
+            "click_rate":  round(grand_clicks  / max(grand_sent, 1) * 100, 1),
+            "bounce_rate": round(grand_bounces / max(grand_sent, 1) * 100, 1),
+        },
+        "error": None,
     }
 
 
@@ -544,6 +660,42 @@ def oi_delete_tag(tag_id: str):
 # ===========================================================================
 # Multi-tool catch-all routes — MUST stay at the bottom
 # ===========================================================================
+
+def _quota_for(tool: str):
+    for tid, _name, quota_fn, _env in TOOL_META:
+        if tid == tool:
+            return quota_fn
+    raise HTTPException(status_code=400, detail=f"Unknown email tool: {tool}")
+
+
+@router.get("/{tool}/overview")
+def get_tool_overview(tool: str):
+    """Quota + aggregate campaign stats for a single email tool."""
+    if tool not in TOOL_DISPATCH:
+        raise HTTPException(status_code=400, detail=f"Unknown email tool: {tool}")
+    quota_fn = _quota_for(tool)
+    quota = quota_fn()
+    get_campaigns_fn, _ = TOOL_DISPATCH[tool]
+    campaigns = get_campaigns_fn()
+
+    total_sent    = sum(c.get("sent", 0) for c in campaigns)
+    total_opens   = sum(c.get("sent", 0) * c.get("open_rate",   0) / 100 for c in campaigns)
+    total_replies = sum(c.get("sent", 0) * c.get("reply_rate",  0) / 100 for c in campaigns)
+    total_clicks  = sum(c.get("sent", 0) * c.get("click_rate",  0) / 100 for c in campaigns)
+    total_bounces = sum(c.get("sent", 0) * c.get("bounce_rate", 0) / 100 for c in campaigns)
+
+    return {
+        "quota": quota,
+        "aggregate": {
+            "emails_sent": total_sent,
+            "open_rate":   round(total_opens   / max(total_sent, 1) * 100, 1),
+            "reply_rate":  round(total_replies / max(total_sent, 1) * 100, 1),
+            "click_rate":  round(total_clicks  / max(total_sent, 1) * 100, 1),
+            "bounce_rate": round(total_bounces / max(total_sent, 1) * 100, 1),
+        },
+        "error": None,
+    }
+
 
 @router.get("/{tool}/campaigns")
 def get_tool_campaigns(tool: str):

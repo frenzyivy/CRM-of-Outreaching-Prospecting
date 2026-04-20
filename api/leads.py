@@ -3,13 +3,36 @@
 import logging
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel
 
-from core.supabase_client import get_leads, get_lead_by_id, get_company_data, get_people_data, get_company_employees
+from core.constants import EMAIL_PLATFORMS
+from core.supabase_client import (
+    get_leads,
+    get_lead_by_id,
+    get_company_data,
+    get_people_data,
+    get_company_employees,
+    set_lead_email_platform,
+    bulk_set_email_platform,
+)
 from services.lead_ingestion import ingest_file
 
 logger = logging.getLogger("leads")
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
+
+
+# ---------------------------------------------------------------------------
+# Platform assignment request bodies
+# ---------------------------------------------------------------------------
+
+class EmailPlatformRequest(BaseModel):
+    platform: str | None = None
+
+
+class BulkEmailPlatformRequest(BaseModel):
+    lead_ids: list[str]
+    platform: str | None = None
 
 
 @router.get("/company-view")
@@ -35,6 +58,30 @@ def list_company_employees(company_name: str):
     """All person records sharing this company_name."""
     from urllib.parse import unquote
     return get_company_employees(unquote(company_name))
+
+
+@router.patch("/{lead_id}/email-platform")
+def set_lead_platform(lead_id: str, body: EmailPlatformRequest):
+    """Assign or clear the email_platform on a single lead."""
+    if body.platform and body.platform not in EMAIL_PLATFORMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Choose from: {list(EMAIL_PLATFORMS.keys())}",
+        )
+    result = set_lead_email_platform(lead_id, body.platform)
+    return {"status": "ok", "lead_id": lead_id, "platform": body.platform, "data": result}
+
+
+@router.post("/bulk-assign-platform")
+def bulk_assign_platform(body: BulkEmailPlatformRequest):
+    """Bulk-assign email_platform to a list of lead IDs."""
+    if body.platform and body.platform not in EMAIL_PLATFORMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Choose from: {list(EMAIL_PLATFORMS.keys())}",
+        )
+    count = bulk_set_email_platform(body.lead_ids, body.platform)
+    return {"status": "ok", "updated": count, "platform": body.platform}
 
 
 @router.post("/import")
