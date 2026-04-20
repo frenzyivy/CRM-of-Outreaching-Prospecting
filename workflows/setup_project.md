@@ -23,12 +23,13 @@ This creates `data/master_leads.xlsx` with 15 sample companies and 25 sample con
 
 ### 3. Start the backend
 ```bash
-uvicorn server:app --reload
+uvicorn backend.app:app --reload
 ```
 Backend runs at http://localhost:8000. On startup it:
-- Initializes the SQLite database at `data/crm_metadata.db`
-- Reads `data/master_leads.xlsx` into memory
-- Starts polling the Excel file every 30 seconds for changes
+- Connects to Supabase (`SUPABASE_URL` + `SUPABASE_SERVICE_KEY` from `.env`)
+- Scans `/imports` for any files already sitting there (`scan_existing`)
+- Starts the folder watcher in a background thread
+- Starts the email-sync scheduler (every 15 min) if `apscheduler` is installed
 
 ### 4. Install frontend dependencies (first time only)
 ```bash
@@ -58,8 +59,8 @@ Navigate to http://localhost:5173 in your browser.
 If Excel is open, the backend serves cached data and shows a warning. Close Excel to allow fresh reads.
 
 ### Port conflicts
-- Backend: change port with `uvicorn server:app --reload --port 8001`
+- Backend: change port with `uvicorn backend.app:app --reload --port 8001`
 - Frontend: Vite will auto-pick the next available port
 
 ### CORS errors
-The backend allows requests from `localhost:5173`. If Vite uses a different port, update the `allow_origins` list in `server.py`.
+The backend allows requests from `localhost:5173`. If Vite uses a different port, update the `allow_origins` list in `backend/app.py`.

@@ -3,8 +3,8 @@ Folder Watcher Tool
 Monitors the /imports directory for new CSV/Excel files.
 When a file is dropped, it automatically triggers lead ingestion.
 
-Run standalone:  python -m tools.folder_watcher
-Or started automatically by server.py on startup.
+Run standalone:  python -m services.folder_watcher
+Or started automatically by backend/app.py on startup.
 """
 
 import logging

@@ -1,5 +1,15 @@
 # Deploy CRM to VPS
 
+> ⚠️ **This project has not been deployed to production.** Last known deploy
+> path on the VPS is `/home/CRM-of-Outreaching-Prospecting/` but the process
+> is not currently running (verified 2026-04-20). The only live Python
+> process on the VPS is KomalFi (`main:app`, port 8000) at
+> `/home/komal/komalfin/backend/`.
+>
+> **The next CRM deployment will be a fresh start** — follow the steps below
+> from scratch, don't assume any state exists. This banner should be removed
+> only after a successful first-run deploy.
+
 ## Objective
 Push latest code to GitHub and deploy to the CloudPanel VPS so the live site reflects current changes.
 
@@ -55,8 +65,13 @@ cd frontend && npm install && npm run build && cd ..
 # Start the backend (port 8001)
 cd /home/CRM-of-Outreaching-Prospecting
 source venv/bin/activate
-uvicorn server:app --host 0.0.0.0 --port 8001 &
+uvicorn backend.app:app --host 0.0.0.0 --port 8001 &
 ```
+
+Note: `backend.app:app` is the canonical FastAPI entrypoint (see
+`backend/app.py`). The legacy `server.py` was removed in consolidation
+commit c13cc3f — do not use `uvicorn server:app`, the module no longer
+exists.
 
 ### 4. VPS — Nginx serves frontend
 CloudPanel/Nginx should be configured to:
