@@ -2,6 +2,13 @@
 Shared constants used across the CRM and AI agent subsystems.
 """
 
+EMAIL_PLATFORMS = {
+    "instantly": "Instantly.ai",
+    "convertkit": "ConvertKit",
+    "lemlist": "Lemlist",
+    "smartlead": "Smartlead",
+}
+
 PIPELINE_STAGES = [
     "new",
     "researched",

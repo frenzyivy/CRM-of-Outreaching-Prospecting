@@ -1,0 +1,1012 @@
+/* ============================================================================
+   Alainza CRM — Core components
+   All under `.alainza` scope so they don't clash with existing Tailwind UI.
+   ============================================================================ */
+
+/* Card ---------------------------------------------------------------------- */
+
+.alainza .card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.alainza .card.hoverable:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-2);
+}
+
+.alainza .card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.alainza .card-t {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.alainza .card-sub {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-4);
+  letter-spacing: 0.02em;
+}
+
+/* KPI ----------------------------------------------------------------------- */
+
+.alainza .kpi {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alainza .kpi-l {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.alainza .kpi-v {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--ink);
+  line-height: 1.05;
+}
+
+.alainza .kpi-v small {
+  font-size: 14px;
+  color: var(--ink-3);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.alainza .kpi-d {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+
+.alainza .kpi-d.up   { color: var(--success); }
+.alainza .kpi-d.down { color: var(--danger);  }
+
+/* Button -------------------------------------------------------------------- */
+
+.alainza .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Geist', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+  text-decoration: none;
+  line-height: 1.3;
+}
+
+.alainza .btn:hover {
+  background: var(--surface-3);
+  border-color: var(--line-2);
+}
+
+.alainza .btn:active {
+  transform: translateY(0.5px);
+}
+
+.alainza .btn.primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.alainza .btn.primary:hover {
+  background: var(--brand-2);
+  border-color: var(--brand-2);
+}
+
+.alainza .btn.sm {
+  font-size: 11px;
+  padding: 4px 9px;
+}
+
+.alainza .btn.ghost {
+  background: transparent;
+  border-color: var(--line);
+}
+
+.alainza .btn.ghost:hover {
+  background: var(--surface-2);
+}
+
+/* Chip ---------------------------------------------------------------------- */
+
+.alainza .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Geist', sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.alainza .chip:hover {
+  background: var(--surface-2);
+  border-color: var(--line-2);
+}
+
+.alainza .chip.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.alainza .chip.live {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: transparent;
+}
+
+.alainza .chip.live::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: chipPulse 2s infinite;
+}
+
+@keyframes chipPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* Badge (qbadge) ------------------------------------------------------------ */
+
+.alainza .qbadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+}
+
+.alainza .qbadge.reply   { background: var(--danger-soft);  color: var(--danger);  border-color: transparent; }
+.alainza .qbadge.mtg     { background: var(--warn-soft);    color: var(--warn);    border-color: transparent; }
+.alainza .qbadge.approve { background: var(--brand-soft);   color: var(--brand-2); border-color: transparent; }
+.alainza .qbadge.cold    { background: var(--surface-3);    color: var(--ink-2);   border-color: transparent; }
+.alainza .qbadge.close   { background: var(--success-soft); color: var(--success); border-color: transparent; }
+
+/* Data table (grid-based) --------------------------------------------------- */
+
+.alainza .dt {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.alainza .dt-head,
+.alainza .dt-row {
+  display: grid;
+  gap: 12px;
+  padding: 10px 16px;
+  align-items: center;
+}
+
+.alainza .dt-head {
+  background: var(--surface-2);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.alainza .dt-row {
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.alainza .dt-row:last-child { border-bottom: none; }
+.alainza .dt-row:hover      { background: var(--surface-2); }
+
+/* Bar chart (single metric) ------------------------------------------------- */
+
+.alainza .bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.alainza .bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s ease-out;
+}
+
+.alainza .bar-fill.bar-g { background: var(--success); }
+.alainza .bar-fill.bar-m { background: var(--warn);    }
+.alainza .bar-fill.bar-b { background: var(--danger);  }
+.alainza .bar-fill.bar-brand { background: var(--brand-2); }
+
+/* Priority queue row -------------------------------------------------------- */
+
+.alainza .pq-card {
+  position: relative;
+  padding-left: 22px;
+  overflow: hidden;
+}
+
+.alainza .pq-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg,
+    var(--danger) 0%,
+    var(--warn)   35%,
+    var(--brand)  70%,
+    var(--success) 100%);
+}
+
+.alainza .pq-row {
+  display: grid;
+  grid-template-columns: 84px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.alainza .pq-row:last-child { border-bottom: none; }
+
+.alainza .pq-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.alainza .pq-sub {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+/* Champion Leads ------------------------------------------------------------ */
+
+.alainza .champ-card {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--brand-soft) 100%, transparent),
+    transparent 80%);
+  border: 1px solid var(--brand-border);
+}
+
+.alainza .champ-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.alainza .champ-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.alainza .champ-row:hover {
+  transform: translateY(-1px);
+  border-color: var(--brand-border);
+}
+
+.alainza .champ-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: 10px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--ink-4);
+}
+
+.alainza .champ-score.tier-a { background: var(--success); }
+.alainza .champ-score.tier-b { background: var(--brand);   }
+.alainza .champ-score.tier-c { background: var(--accent);  }
+
+.alainza .champ-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.alainza .champ-signal {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 680px) {
+  .alainza .champ-grid { grid-template-columns: 1fr; }
+}
+
+/* Goals card ---------------------------------------------------------------- */
+
+.alainza .goal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.alainza .goal-row:last-child { border-bottom: none; }
+
+.alainza .goal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.alainza .goal-name {
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.alainza .goal-pct {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.alainza .goal-pct.ahead  { color: var(--success); }
+.alainza .goal-pct.behind { color: var(--danger); }
+.alainza .goal-pct.on     { color: var(--brand-2); }
+
+.alainza .goal-sub {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
+/* Activity streak ----------------------------------------------------------- */
+
+.alainza .streak-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.alainza .streak-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--surface-2);
+  transition: transform 0.12s ease;
+  cursor: default;
+}
+
+.alainza .streak-cell:hover {
+  transform: scale(1.2);
+}
+
+.alainza .streak-cell.lvl-1 { background: rgba(96, 165, 250, 0.25); }
+.alainza .streak-cell.lvl-2 { background: rgba(96, 165, 250, 0.50); }
+.alainza .streak-cell.lvl-3 { background: rgba(96, 165, 250, 0.75); }
+.alainza .streak-cell.lvl-4 { background: rgba(96, 165, 250, 1.00); }
+
+.alainza .streak-cell.skip  { background: var(--danger-soft); }
+
+.alainza .streak-big {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.alainza .streak-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Daily digest -------------------------------------------------------------- */
+
+.alainza .digest-card {
+  background: linear-gradient(135deg, var(--surface), var(--brand-soft));
+}
+
+.alainza .digest-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.alainza .digest-stat {
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.alainza .digest-v {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.alainza .digest-l {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.alainza .digest-bullet {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+.alainza .digest-bullet .dot {
+  flex-shrink: 0;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-top: 7px;
+  background: var(--ink-4);
+}
+
+.alainza .digest-bullet.up      .dot { background: var(--success); }
+.alainza .digest-bullet.down    .dot { background: var(--danger);  }
+.alainza .digest-bullet.neutral .dot { background: var(--brand-2); }
+
+/* Heatmap (generic) --------------------------------------------------------- */
+
+.alainza .heatmap-grid {
+  display: grid;
+  gap: 3px;
+}
+
+.alainza .hm-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--surface-2);
+  transition: transform 0.12s ease;
+}
+
+.alainza .hm-cell:hover { transform: scale(1.15); }
+
+.alainza .hm-cell.today {
+  outline: 1.5px solid var(--brand-2);
+  outline-offset: 1px;
+}
+
+/* Sidebar ------------------------------------------------------------------- */
+
+.alainza .side-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.alainza .side-mark {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-family: 'Geist', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.alainza .side-name {
+  font-family: 'Geist', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.alainza .side-ver {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-4);
+  margin-left: auto;
+}
+
+.alainza .side-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alainza .nav-group {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-4);
+  padding: 10px 10px 4px;
+}
+
+.alainza .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+  font-family: 'Geist', sans-serif;
+}
+
+.alainza .nav-item:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.alainza .nav-item.active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.alainza .nav-item.active svg { color: #fff; }
+
+.alainza .nav-item svg {
+  width: 14px; height: 14px;
+  color: var(--ink-2);
+  flex-shrink: 0;
+}
+
+.alainza .nav-pill {
+  margin-left: auto;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+
+.alainza .nav-item.active .nav-pill {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.alainza .nav-pill.hot {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.alainza .side-foot {
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+
+/* Topbar -------------------------------------------------------------------- */
+
+.alainza .topbar-search {
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.alainza .topbar-search kbd {
+  margin-left: auto;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+}
+
+.alainza .topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alainza .icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.alainza .icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Sidebar NavLink active / inactive states -------------------------------- */
+
+.alainza-nav-link {
+  color: var(--ink-2);
+  font-family: 'Geist', sans-serif;
+  font-size: 12.5px;
+}
+
+.alainza-nav-link svg { color: var(--ink-2); }
+.alainza-nav-link:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.alainza-nav-link:hover svg { color: var(--ink); }
+
+.alainza-nav-link.active {
+  background: var(--brand);
+  color: #fff;
+}
+.alainza-nav-link.active svg { color: #fff; }
+
+/* Pipeline board -------------------------------------------------------- */
+
+.alainza .pipe-board {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+@media (max-width: 1500px) {
+  .alainza .pipe-board {
+    grid-template-columns: repeat(11, 220px);
+  }
+}
+
+.alainza .pipe-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.alainza .pipe-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+}
+
+.alainza .pipe-stage-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.alainza .pipe-col-title {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  flex: 1;
+}
+
+.alainza .pipe-col-count {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.alainza .pipe-col-drop {
+  flex: 1;
+  min-height: 160px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.alainza .pipe-col-drop.drag-over {
+  background: var(--brand-soft);
+  border-color: var(--brand-border);
+}
+
+.alainza .pipe-col-empty {
+  padding: 22px 8px;
+  text-align: center;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-4);
+}
+
+/* Lead card + heat dot -------------------------------------------------- */
+
+.alainza .lead-card {
+  position: relative;
+  padding: 12px 12px 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: grab;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.alainza .lead-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-2);
+}
+
+.alainza .lead-card:active {
+  cursor: grabbing;
+}
+
+.alainza .lead-card-heat {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+
+.alainza .lead-card-heat.hot  { background: var(--danger);  box-shadow: 0 0 0 2px var(--danger-soft); }
+.alainza .lead-card-heat.warm { background: var(--warn);    box-shadow: 0 0 0 2px var(--warn-soft); }
+.alainza .lead-card-heat.cool { background: var(--success); box-shadow: 0 0 0 2px var(--success-soft); }
+
+.alainza .lead-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+  padding-right: 18px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alainza .lead-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alainza .lead-card-meta svg {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  opacity: 0.7;
+}
+
+.alainza .lead-card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.alainza .stage-tag {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.alainza .age-meta {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-4);
+}
+
+/* Summary strip --------------------------------------------------------- */
+
+.alainza .pipe-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-top: 8px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  align-items: center;
+}
+
+.alainza .pipe-summary .stat-v {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.alainza .pipe-summary .stat-l {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.alainza .pipe-summary .stat-sub {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9.5px;
+  color: var(--ink-4);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+@media (max-width: 980px) {
+  .alainza .pipe-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .alainza .pipe-summary > :last-child {
+    grid-column: span 2;
+    justify-self: stretch;
+  }
+}
+
+/* Leakage report -------------------------------------------------------- */
+
+.alainza .leak-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.alainza .leak-row:last-child { border-bottom: none; }
+
+.alainza .leak-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alainza .leak-icon.danger { background: var(--danger-soft); color: var(--danger); }
+.alainza .leak-icon.warn   { background: var(--warn-soft);   color: var(--warn);   }
+.alainza .leak-icon.brand  { background: var(--brand-soft);  color: var(--brand-2);}
+
+.alainza .leak-title {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.alainza .leak-sub {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.alainza .leak-count {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--ink);
+  min-width: 36px;
+  text-align: right;
+}

@@ -1,48 +1,9 @@
-import { Building2, User, MapPin, Briefcase, Phone, Mail, Globe, Calendar, ExternalLink, Tag } from 'lucide-react'
+import { memo } from 'react'
+import { Building2, User, MapPin, Briefcase, Mail } from 'lucide-react'
 import type { Lead } from '../../types'
 import { isCompanyOnly } from '../../types'
 import type { CompanyField, LeadField } from './fieldConfig'
-
-const stageTagColors: Record<string, string> = {
-  new:         'bg-slate-100 text-slate-600',
-  researched:  'bg-blue-50 text-blue-600',
-  email_sent:  'bg-indigo-50 text-indigo-600',
-  follow_up_1: 'bg-violet-50 text-violet-600',
-  follow_up_2: 'bg-purple-50 text-purple-600',
-  responded:   'bg-emerald-50 text-emerald-600',
-  meeting:     'bg-amber-50 text-amber-700',
-  proposal:    'bg-orange-50 text-orange-600',
-  closed_won:  'bg-green-50 text-green-700',
-  closed_lost: 'bg-red-50 text-red-600',
-}
-
-function formatDate(iso?: string) {
-  if (!iso) return null
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-function Row({ icon, text, link }: { icon: React.ReactNode; text: string; link?: string }) {
-  const inner = (
-    <span className="text-[11px] text-slate-400 flex items-center gap-1 truncate min-w-0">
-      <span className="shrink-0 text-slate-300">{icon}</span>
-      <span className="truncate">{text}</span>
-    </span>
-  )
-  if (link) {
-    return (
-      <a
-        href={link.startsWith('http') ? link : `https://${link}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="block hover:text-blue-500 transition-colors"
-      >
-        {inner}
-      </a>
-    )
-  }
-  return <div>{inner}</div>
-}
+import { heatFor, heatLabel, daysSinceLastTouch } from '../../utils/heat'
 
 interface Props {
   lead: Lead
@@ -52,8 +13,13 @@ interface Props {
   visibleLeadFields?: Set<LeadField>
 }
 
-export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFields, visibleLeadFields }: Props) {
-  const tagColor = stageTagColors[lead.stage] ?? 'bg-slate-100 text-slate-600'
+function LeadCard({ lead, onClick, onDragStart, visibleCompanyFields, visibleLeadFields }: Props) {
+  const heat = heatFor(lead)
+  const days = daysSinceLastTouch(lead)
+  const heatClass = heat === 'hot' ? 'hot'
+                  : heat === 'warm' ? 'warm'
+                  : heat === 'cool' ? 'cool'
+                  : ''
 
   // ── Company card ──────────────────────────────────────────────────────────
   if (isCompanyOnly(lead)) {
@@ -66,51 +32,31 @@ export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFie
         draggable
         onClick={onClick}
         onDragStart={onDragStart}
-        className="bg-white border border-slate-100 rounded-xl p-3.5 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-blue-200/60 hover:-translate-y-0.5 transition-all"
+        className="lead-card"
+        title={heatLabel(heat)}
       >
-        {/* Name */}
-        <div className="flex items-start gap-2.5 mb-2">
-          <div className="p-1.5 rounded-lg shrink-0 mt-0.5 bg-blue-50">
-            <Building2 size={13} className="text-blue-500" />
-          </div>
-          <p className="text-sm font-semibold text-slate-800 truncate leading-tight pt-0.5">{c.company_name}</p>
+        <span className={`lead-card-heat ${heatClass}`} aria-hidden="true" />
+        <div className="lead-card-title">
+          <Building2 size={11} style={{ display: 'inline-block', marginRight: 6, opacity: 0.7, verticalAlign: '-2px' }} />
+          {c.company_name || '(no name)'}
         </div>
 
-        {/* Optional fields */}
-        <div className="space-y-1.5 mb-2.5 pl-0.5">
-          {show('industry') && c.industry && (
-            <Row icon={<Briefcase size={10} />} text={c.industry} />
-          )}
-          {show('city_country') && location && (
-            <Row icon={<MapPin size={10} />} text={location} />
-          )}
-          {show('phone') && c.phone && (
-            <Row icon={<Phone size={10} />} text={c.phone} />
-          )}
-          {show('website') && c.website && (
-            <Row icon={<Globe size={10} />} text={c.website} link={c.website} />
-          )}
-          {show('notes') && c.notes && (
-            <p className="text-[11px] text-slate-400 italic line-clamp-2 pl-4">{c.notes}</p>
-          )}
-          {show('created_at') && c.created_at && (
-            <Row icon={<Calendar size={10} />} text={`Added ${formatDate(c.created_at)}`} />
-          )}
-        </div>
+        {show('industry') && c.industry && (
+          <div className="lead-card-meta"><Briefcase /> {c.industry}</div>
+        )}
+        {show('city_country') && location && (
+          <div className="lead-card-meta"><MapPin /> {location}</div>
+        )}
 
-        {/* Stage badge */}
-        <div className="flex justify-end pt-1.5 border-t border-slate-50">
-          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${tagColor}`}>
-            {lead.stage_label}
-          </span>
+        <div className="lead-card-foot">
+          <span className="stage-tag">{lead.stage_label}</span>
+          {days != null && <span className="age-meta">{days}d</span>}
         </div>
       </div>
     )
   }
 
-  // ── Person card (contact or lead) ─────────────────────────────────────────
-  // Both types share similar fields but use different column names in the DB.
-  // Normalise to a common shape so the card works for either.
+  // ── Person card ────────────────────────────────────────────────────────────
   const raw = lead as unknown as Record<string, unknown>
   const show = (f: LeadField) => !visibleLeadFields || visibleLeadFields.has(f)
 
@@ -120,77 +66,42 @@ export default function LeadCard({ lead, onClick, onDragStart, visibleCompanyFie
     '(no name)'
   const jobTitle = (raw.title as string) || (raw.job_title as string) || ''
   const companyName = (raw.company_name as string) || (raw.company as string) || ''
-  const email = (raw.email as string) || (raw.personal_email as string) || ''
-  const phone = (raw.phone as string) || ''
+  const email = (raw.email as string) || ''
   const location = [raw.city, raw.country].filter(Boolean).join(', ')
-  const linkedin = (raw.linkedin as string) || ''
-  const instagram = (raw.instagram as string) || ''
-  const facebook = (raw.facebook as string) || ''
-  const twitter = (raw.twitter as string) || ''
-  const source = (raw.source as string) || ''
-  const notionUrl = (raw.notion_url as string) || ''
 
   return (
     <div
       draggable
       onClick={onClick}
       onDragStart={onDragStart}
-      className="bg-white border border-slate-100 rounded-xl p-3.5 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-blue-200/60 hover:-translate-y-0.5 transition-all"
+      className="lead-card"
+      title={heatLabel(heat)}
     >
-      {/* Name */}
-      <div className="flex items-start gap-2.5 mb-2">
-        <div className="p-1.5 rounded-lg shrink-0 mt-0.5 bg-slate-50">
-          <User size={13} className="text-slate-500" />
-        </div>
-        <p className="text-sm font-semibold text-slate-800 truncate leading-tight pt-0.5">{fullName}</p>
+      <span className={`lead-card-heat ${heatClass}`} aria-hidden="true" />
+      <div className="lead-card-title">
+        <User size={11} style={{ display: 'inline-block', marginRight: 6, opacity: 0.7, verticalAlign: '-2px' }} />
+        {fullName}
       </div>
 
-      {/* Optional fields */}
-      <div className="space-y-1.5 mb-2.5 pl-0.5">
-        {show('job_title') && jobTitle && (
-          <Row icon={<Briefcase size={10} />} text={jobTitle} />
-        )}
-        {show('company') && companyName && (
-          <Row icon={<Building2 size={10} />} text={companyName} />
-        )}
-        {show('email') && email && (
-          <Row icon={<Mail size={10} />} text={email} />
-        )}
-        {show('phone') && phone && (
-          <Row icon={<Phone size={10} />} text={phone} />
-        )}
-        {show('city_country') && location && (
-          <Row icon={<MapPin size={10} />} text={location} />
-        )}
-        {show('source') && source && (
-          <Row icon={<Tag size={10} />} text={source} />
-        )}
-        {show('linkedin') && linkedin && (
-          <Row icon={<ExternalLink size={10} />} text="LinkedIn" link={linkedin} />
-        )}
-        {show('instagram') && instagram && (
-          <Row icon={<ExternalLink size={10} />} text="Instagram" link={instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram.replace(/^@/, '')}`} />
-        )}
-        {show('facebook') && facebook && (
-          <Row icon={<ExternalLink size={10} />} text="Facebook" link={facebook.startsWith('http') ? facebook : `https://facebook.com/${facebook}`} />
-        )}
-        {show('twitter') && twitter && (
-          <Row icon={<ExternalLink size={10} />} text="Twitter" link={twitter.startsWith('http') ? twitter : `https://x.com/${twitter.replace(/^@/, '')}`} />
-        )}
-        {show('notion_url') && notionUrl && (
-          <Row icon={<ExternalLink size={10} />} text="Notion" link={notionUrl} />
-        )}
-        {show('created_at') && (raw.created_at as string) && (
-          <Row icon={<Calendar size={10} />} text={`Added ${formatDate(raw.created_at as string)}`} />
-        )}
-      </div>
+      {show('job_title') && jobTitle && (
+        <div className="lead-card-meta"><Briefcase /> {jobTitle}</div>
+      )}
+      {show('company') && companyName && (
+        <div className="lead-card-meta"><Building2 /> {companyName}</div>
+      )}
+      {show('email') && email && (
+        <div className="lead-card-meta"><Mail /> {email}</div>
+      )}
+      {show('city_country') && location && (
+        <div className="lead-card-meta"><MapPin /> {location}</div>
+      )}
 
-      {/* Stage badge */}
-      <div className="flex justify-end pt-1.5 border-t border-slate-50">
-        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${tagColor}`}>
-          {lead.stage_label}
-        </span>
+      <div className="lead-card-foot">
+        <span className="stage-tag">{lead.stage_label}</span>
+        {days != null && <span className="age-meta">{days}d</span>}
       </div>
     </div>
   )
 }
+
+export default memo(LeadCard)

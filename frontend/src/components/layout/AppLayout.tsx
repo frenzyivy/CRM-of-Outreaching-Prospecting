@@ -12,9 +12,10 @@ export default function AppLayout() {
       <div className="flex h-screen overflow-hidden">
         <Sidebar expanded={sidebarExpanded} onToggle={() => setSidebarExpanded((v) => !v)} />
         <main
-          className={`flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 min-h-screen transition-[margin] duration-200 ease-in-out ${
-            sidebarExpanded ? 'ml-[200px]' : 'ml-[60px]'
+          className={`flex-1 overflow-y-auto min-h-screen transition-[margin] duration-200 ease-in-out ${
+            sidebarExpanded ? 'ml-[220px]' : 'ml-[60px]'
           }`}
+          style={{ background: 'var(--bg)' }}
         >
           <Outlet />
         </main>

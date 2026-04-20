@@ -1,10 +1,45 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>Alainza CRM</title>
+
+    <!-- Pre-paint theme script: runs before any CSS/React to prevent FOUC.
+         Reads `alainza-theme` from localStorage and applies data-theme.
+         Also mirrors to class="dark" for backwards-compat with existing
+         Tailwind `dark:` utilities across the legacy views. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('alainza-theme');
+          // Back-compat: earlier versions used 'theme'. Read it once if alainza-theme is missing.
+          if (!stored) {
+            var legacy = localStorage.getItem('theme');
+            if (legacy === 'dark' || legacy === 'light') stored = legacy;
+          }
+          var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var resolved = stored === 'light' ? 'light'
+                       : stored === 'dark'  ? 'dark'
+                       : (systemDark ? 'dark' : 'dark'); // default = dark
+          document.documentElement.setAttribute('data-theme', resolved);
+          if (resolved === 'dark') document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

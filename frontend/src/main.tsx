@@ -10,8 +10,9 @@ import { AuthProvider } from './contexts/AuthContext'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchInterval: 30000,
-      staleTime: 10000,
+      staleTime: 5 * 60 * 1000,   // 5 minutes — data stays fresh, no background churn
+      gcTime: 10 * 60 * 1000,     // 10 minutes — keep unused cache in memory
+      refetchOnWindowFocus: false, // don't refetch just because user switched tabs
     },
   },
 })

@@ -476,6 +476,23 @@ const INTEGRATIONS: Integration[] = [
 
   // ── Email Outreach ────────────────────────────────────────────────────────
   {
+    id: 'convertkit',
+    name: 'ConvertKit',
+    description: 'Creator-focused email platform with sequences, broadcasts, and subscriber tagging for nurture campaigns.',
+    category: 'outreach',
+    logo: '📬',
+    canConnect: true,
+    credentialFields: [
+      {
+        envKey: 'CONVERTKIT_API_KEY',
+        label: 'API Key',
+        placeholder: 'ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        type: 'password',
+        hint: 'ConvertKit → Settings → Advanced → API Key',
+      },
+    ],
+  },
+  {
     id: 'lemlist',
     name: 'Lemlist',
     description: 'Multichannel outreach with personalised images and videos. Sync campaigns and track engagement.',

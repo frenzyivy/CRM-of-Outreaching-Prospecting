@@ -17,9 +17,21 @@ export default function DashboardPage() {
   const [filters, setFilters] = useState<DashboardFiltersType>({
     dateRange: 'This Month',
   })
-  const { data: stats, isLoading } = useDashboardStats(filters)
+  const { data: stats, isLoading, isError } = useDashboardStats(filters)
 
-  if (isLoading || !stats) {
+  const emptyStats = {
+    total_leads: 0, total_companies: 0, total_contacts: 0,
+    outreaches_today: 0, emails_today: 0, calls_today: 0,
+    notes_today: 0, stage_changes_today: 0,
+    meetings_count: 0, proposals_count: 0,
+    closed_won_count: 0, closed_lost_count: 0,
+    response_rate: 0, conversion_rate: 0,
+    free_trial_count: 0, clients_paid: 0, outreach_to_trial: 0,
+    revenue_generated: 0, total_spent: 0,
+    stage_counts: {}, excel_last_modified: 0, excel_error: null,
+  }
+
+  if (isLoading) {
     return (
       <div>
         <Header title="Dashboard" subtitle="Overview of your pipeline & activity" />
@@ -32,6 +44,8 @@ export default function DashboardPage() {
     )
   }
 
+  const displayStats = stats ?? emptyStats
+
   return (
     <div>
       <Header title="Dashboard" subtitle="Overview of your pipeline & activity" />
@@ -42,59 +56,64 @@ export default function DashboardPage() {
       </div>
 
       {/* ─── KPI Cards (matching wireframe) ─── */}
+      {isError && (
+        <div className="mb-4 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl text-xs text-red-600 dark:text-red-400">
+          Could not load dashboard stats — backend may be offline. Showing last known values.
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
         <EnhancedStatCard
           title="Total Leads"
-          value={stats.total_leads}
+          value={displayStats.total_leads}
           icon={Users}
           color="bg-blue-500"
-          subtitle={`${stats.total_companies} companies · ${stats.total_contacts} contacts`}
+          subtitle={`${displayStats.total_companies} companies · ${displayStats.total_contacts} contacts`}
         />
         <EnhancedStatCard
           title="Outreaches"
-          value={stats.outreaches_today}
+          value={displayStats.outreaches_today}
           icon={Target}
           color="bg-violet-500"
-          subtitle={`${stats.emails_today} emails · ${stats.calls_today} calls`}
+          subtitle={`${displayStats.emails_today} emails · ${displayStats.calls_today} calls`}
         />
         <EnhancedStatCard
           title="Meetings Booked"
-          value={stats.meetings_count}
+          value={displayStats.meetings_count}
           icon={Calendar}
           color="bg-indigo-500"
-          subtitle={`${stats.proposals_count} proposals`}
+          subtitle={`${displayStats.proposals_count} proposals`}
         />
         <EnhancedStatCard
           title="Free Trial Started"
-          value={stats.free_trial_count}
+          value={displayStats.free_trial_count}
           icon={PlayCircle}
           color="bg-emerald-500"
           subtitle="Active trials"
         />
         <EnhancedStatCard
           title="Conversion"
-          value={`${stats.outreach_to_trial}%`}
+          value={`${displayStats.outreach_to_trial}%`}
           icon={ArrowRightLeft}
           color="bg-cyan-500"
           subtitle="Outreach → Free Trial"
         />
         <EnhancedStatCard
           title="Clients (Paid)"
-          value={stats.clients_paid}
+          value={displayStats.clients_paid}
           icon={UserCheck}
           color="bg-teal-600"
-          subtitle={`${stats.closed_lost_count} lost`}
+          subtitle={`${displayStats.closed_lost_count} lost`}
         />
         <EnhancedStatCard
           title="Revenue"
-          value={stats.revenue_generated > 0 ? `₹${stats.revenue_generated.toLocaleString()}` : '—'}
+          value={displayStats.revenue_generated > 0 ? `₹${displayStats.revenue_generated.toLocaleString()}` : '—'}
           icon={DollarSign}
           color="bg-rose-500"
           subtitle="Generated"
         />
         <EnhancedStatCard
           title="Total Spent"
-          value={stats.total_spent > 0 ? `₹${stats.total_spent.toLocaleString()}` : '—'}
+          value={displayStats.total_spent > 0 ? `₹${displayStats.total_spent.toLocaleString()}` : '—'}
           icon={CreditCard}
           color="bg-orange-500"
           subtitle="Tools + API"

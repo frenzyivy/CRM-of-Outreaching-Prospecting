@@ -1,9 +1,10 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
-import Header from '../layout/Header'
 import PipelineColumn from './PipelineColumn'
 import LeadDetailModal from '../leads/LeadDetailModal'
 import FieldsToggle from './FieldsToggle'
+import PipeSummary from './PipeSummary'
+import LeakageReport from './LeakageReport'
 import { usePipeline, useUpdateStage } from '../../hooks/usePipeline'
 import type { Lead } from '../../types'
 import { isCompanyOnly } from '../../types'
@@ -48,16 +49,22 @@ function PipelineBoard({
 
   if (isLoading || !pipeline) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex-shrink-0 w-[260px] h-60 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+      <div className="pipe-board">
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div key={i} className="pipe-col">
+            <div className="pipe-col-head">
+              <span className="pipe-stage-dot" style={{ background: 'var(--ink-4)' }} />
+              <span className="pipe-col-title" style={{ opacity: 0.4 }}>loading…</span>
+            </div>
+            <div className="pipe-col-drop" style={{ minHeight: 160, opacity: 0.5 }} />
+          </div>
         ))}
       </div>
     )
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-6">
+    <div className="pipe-board">
       {pipeline.stage_order.map((stage) => (
         <PipelineColumn
           key={stage}
@@ -84,7 +91,13 @@ function PipelineBoard({
 
 export default function PipelinePage() {
   const [selected, setSelected] = useState<Lead | null>(null)
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 300)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   // Field visibility — loaded from localStorage, persisted on change
   const [visibleCompanyFields] = useState<Set<CompanyField>>(loadCompanyFields)
@@ -96,34 +109,53 @@ export default function PipelinePage() {
   }
 
   return (
-    <div>
-      <Header title="Pipeline" subtitle="Track leads across all stages" />
+    <div className="alainza view-fade">
+      {/* Page head */}
+      <header className="page-head">
+        <div>
+          <h1>Pipeline — <em>eleven stages</em> of active deals</h1>
+          <div className="page-sub">Drag a card to move it · heat dot shows days since last touch</div>
+        </div>
+        <div className="page-chips">
+          <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+            <Search
+              size={13}
+              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}
+            />
+            <input
+              type="text"
+              placeholder="Search leads…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              style={{
+                width: '100%',
+                paddingLeft: 28,
+                paddingRight: 10,
+                paddingTop: 6,
+                paddingBottom: 6,
+                fontSize: 12.5,
+                fontFamily: "'Geist', sans-serif",
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
+                borderRadius: 8,
+                color: 'var(--ink)',
+                outline: 'none',
+              }}
+            />
+          </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search leads..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors shadow-sm placeholder:text-slate-400"
+          <button className="btn">
+            <SlidersHorizontal size={13} />
+            Filter
+          </button>
+
+          <FieldsToggle
+            mode="lead"
+            visible={visibleLeadFields}
+            onChange={handleLeadFieldsChange}
           />
         </div>
-
-        <button className="flex items-center gap-2 px-3.5 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-          <SlidersHorizontal size={14} />
-          Filter
-        </button>
-
-        <FieldsToggle
-          mode="lead"
-          visible={visibleLeadFields}
-          onChange={handleLeadFieldsChange}
-        />
-      </div>
+      </header>
 
       {/* Board */}
       <PipelineBoard
@@ -132,6 +164,12 @@ export default function PipelinePage() {
         visibleCompanyFields={visibleCompanyFields}
         visibleLeadFields={visibleLeadFields}
       />
+
+      {/* Weighted pipeline summary strip */}
+      <PipeSummary />
+
+      {/* Lead Leakage Report */}
+      <LeakageReport />
 
       {selected && (
         <LeadDetailModal lead={selected} onClose={() => setSelected(null)} />

@@ -12,8 +12,8 @@ export function useIntegrationsStatus() {
   return useQuery<IntegrationsStatusMap>({
     queryKey: ['integrations-status'],
     queryFn: async () => (await api.get('/integrations/status')).data,
-    staleTime: Infinity,   // status only changes on connect/disconnect — invalidated then
-    gcTime: Infinity,      // keep in cache for the whole session
+    staleTime: 30_000,     // re-check every 30s so key changes in .env are picked up
+    gcTime: Infinity,
   })
 }
 

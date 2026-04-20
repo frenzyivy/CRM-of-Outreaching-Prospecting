@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Mail, Phone, StickyNote,
-  Globe, Share2, ExternalLink, Send, Eye, MousePointer, Reply,
-  Calendar, Tag, MoreVertical, Sparkles, Camera, ThumbsUp, AtSign
+  ExternalLink, Send, Eye, MousePointer, Reply,
+  Calendar, Tag, MoreVertical, Sparkles
 } from 'lucide-react'
 import { useLeadDetail } from '../../hooks/useLeads'
 import { useUpdateStage, useLogActivity } from '../../hooks/usePipeline'
+import { useSetLeadPlatform } from '../../hooks/useEmail'
+import type { EmailPlatformId } from '../../types'
 import Badge from '../common/Badge'
 import LeadScoreBadge from '../common/LeadScoreBadge'
 import AgentPanel from '../ai/AgentPanel'
@@ -114,10 +116,18 @@ function ActivityItem({ activity, isLast }: { activity: Activity; isLast: boolea
   )
 }
 
+const EMAIL_PLATFORM_OPTIONS: { value: EmailPlatformId; label: string }[] = [
+  { value: 'instantly', label: 'Instantly.ai' },
+  { value: 'convertkit', label: 'ConvertKit' },
+  { value: 'lemlist', label: 'Lemlist' },
+  { value: 'smartlead', label: 'Smartlead' },
+]
+
 export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenCompany }: Props) {
   const { data: detail } = useLeadDetail(lead.id)
   const updateStage = useUpdateStage()
   const logActivity = useLogActivity()
+  const setLeadPlatform = useSetLeadPlatform()
   const [activityType, setActivityType] = useState<'email' | 'call' | 'note'>('email')
   const [description, setDescription] = useState('')
   const [activeTab, setActiveTab] = useState<Tab>('activities')
@@ -232,62 +242,37 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
                 <p className="text-xs text-slate-500 truncate">
                   {lead.title || String(lead.job_title || '') || 'No title'}
                 </p>
-                {(lead.company_name || lead.company) && (
-                  <button
-                    onClick={() => {
-                      const name = (lead.company_name || String(lead.company || '')) as string
-                      if (name && onOpenCompany) onOpenCompany(name)
-                    }}
-                    className="text-xs text-blue-500 hover:text-blue-700 hover:underline truncate mt-0.5 text-left cursor-pointer block"
-                  >
-                    {String(lead.company_name || lead.company || '')}
-                  </button>
-                )}
               </div>
             </div>
 
-            {/* Social links */}
-            <div className="flex items-center gap-2 mt-3">
-              {lead.linkedin && (
-                <a href={lead.linkedin} target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors"
-                  title="LinkedIn">
-                  <Share2 size={14} className="text-blue-600" />
-                </a>
-              )}
-              {lead.instagram && (
-                <a href={lead.instagram.startsWith('http') ? lead.instagram : `https://instagram.com/${lead.instagram.replace(/^@/, '')}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-pink-50 transition-colors"
-                  title="Instagram">
-                  <Camera size={14} className="text-pink-600" />
-                </a>
-              )}
-              {lead.facebook && (
-                <a href={lead.facebook.startsWith('http') ? lead.facebook : `https://facebook.com/${lead.facebook}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors"
-                  title="Facebook">
-                  <ThumbsUp size={14} className="text-blue-700" />
-                </a>
-              )}
-              {lead.twitter && (
-                <a href={lead.twitter.startsWith('http') ? lead.twitter : `https://x.com/${lead.twitter.replace(/^@/, '')}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-                  title="Twitter / X">
-                  <AtSign size={14} className="text-slate-800" />
-                </a>
-              )}
-              {lead.website && (
-                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
-                  target="_blank" rel="noreferrer"
-                  className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-                  title="Website">
-                  <Globe size={14} className="text-slate-600" />
-                </a>
-              )}
-            </div>
+            {/* Company Context Chip */}
+            {(lead.company_name || lead.company) && (() => {
+              const companyName = String(lead.company_name || lead.company || '')
+              const rawDomain = String(lead.company_website || lead.website || '')
+              const domain = rawDomain.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
+              const locationParts = [lead.city, lead.state, lead.country].filter(Boolean)
+              const locationLine = locationParts.join(', ')
+              const companyInitials = companyName.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
+              return (
+                <button
+                  onClick={() => { if (onOpenCompany) onOpenCompany(companyName) }}
+                  className="mt-3 w-full text-left border-l-2 border-blue-500 bg-slate-50 hover:bg-blue-50 rounded-r-lg px-3 py-2.5 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-slate-200 flex items-center justify-center shrink-0">
+                      <span className="text-slate-600 font-semibold text-[10px]">{companyInitials}</span>
+                    </div>
+                    <span className="text-sm font-medium text-blue-600 truncate">{companyName}</span>
+                  </div>
+                  {locationLine && (
+                    <p className="text-xs text-slate-500 mt-1 ml-8 truncate">{locationLine}</p>
+                  )}
+                  {domain && (
+                    <p className="text-xs text-slate-400 mt-0.5 ml-8 truncate">{domain}</p>
+                  )}
+                </button>
+              )
+            })()}
           </div>
 
           {/* Quick Action Buttons */}
@@ -316,52 +301,17 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
 
           {/* Contact Details */}
           <div className="px-4 py-3 flex-1 overflow-y-auto">
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact Info</h4>
+            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact</h4>
             <InfoRow label="Email" value={lead.email} isLink />
-            {lead.personal_email && <InfoRow label="Personal Email" value={lead.personal_email} isLink />}
-            {lead.cc_email && <InfoRow label="CC Email" value={lead.cc_email} isLink />}
             <InfoRow label="Phone" value={lead.phone} />
-            <InfoRow label="Email Status" value={lead.email_status} />
-            {lead.email_type && <InfoRow label="Email Type" value={lead.email_type} />}
             <InfoRow label="Specialty" value={lead.specialty || ''} />
-            {lead.sub_specialties && <InfoRow label="Sub-specialties" value={lead.sub_specialties} />}
-            {lead.experience && <InfoRow label="Experience" value={lead.experience} />}
-            {lead.skills && <InfoRow label="Skills" value={lead.skills} />}
-
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Location</h4>
-            <InfoRow label="City" value={lead.city} />
-            <InfoRow label="State" value={lead.state} />
-            <InfoRow label="Country" value={lead.country} />
-            {lead.street_address && <InfoRow label="Street Address" value={lead.street_address} />}
-            {lead.postal_code && <InfoRow label="Postal Code" value={lead.postal_code} />}
 
             <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Links</h4>
             <InfoRow label="LinkedIn" value={lead.linkedin} isLink />
-            {lead.instagram && <InfoRow label="Instagram" value={lead.instagram} isLink />}
-            {lead.facebook && <InfoRow label="Facebook" value={lead.facebook} isLink />}
-            {lead.twitter && <InfoRow label="Twitter / X" value={lead.twitter} isLink />}
-            <InfoRow label="Website" value={lead.website} isLink />
-            <InfoRow label="Company Website" value={lead.company_website} isLink />
-            {lead.company_linkedin && <InfoRow label="Company LinkedIn" value={lead.company_linkedin} isLink />}
-            {lead.company_instagram && <InfoRow label="Company Instagram" value={lead.company_instagram} isLink />}
-            {lead.company_facebook && <InfoRow label="Company Facebook" value={lead.company_facebook} isLink />}
-            {lead.company_twitter && <InfoRow label="Company Twitter" value={lead.company_twitter} isLink />}
-            {lead.detail_page_url && <InfoRow label="Detail Page" value={lead.detail_page_url} isLink />}
-
-            {(lead.star_rating || lead.premium_badge || lead.company_size || lead.lead_quality_remarks) && (
-              <>
-                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Ratings & Quality</h4>
-                {lead.star_rating && (
-                  <InfoRow label="Star Rating" value={`${lead.star_rating}${lead.number_of_reviews ? ` (${lead.number_of_reviews} reviews)` : ''}`} />
-                )}
-                {lead.premium_badge && <InfoRow label="Premium Badge" value={lead.premium_badge} />}
-                {lead.company_size && <InfoRow label="Company Size" value={lead.company_size} />}
-                {lead.lead_quality_remarks && <InfoRow label="Quality Remarks" value={lead.lead_quality_remarks} />}
-              </>
-            )}
+            <InfoRow label="Instagram" value={lead.instagram} isLink />
 
             <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Pipeline</h4>
-            <div className="flex items-center gap-2 py-2">
+            <div className="flex items-center gap-2 py-2 border-b border-slate-50">
               <Badge stage={lead.stage} label={lead.stage_label} />
               <select
                 value={lead.stage}
@@ -373,11 +323,22 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
                 ))}
               </select>
             </div>
-
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Source</h4>
-            <InfoRow label="Source" value={lead.source} />
-            <InfoRow label="Instantly ID" value={lead.instantly_id} />
-            <InfoRow label="Notion URL" value={lead.notion_url} isLink />
+            <div className="flex items-center gap-2 py-2 border-b border-slate-50">
+              <span className="text-xs text-slate-400 shrink-0">Assigned to</span>
+              <select
+                value={lead.email_platform || ''}
+                onChange={(e) => {
+                  const val = e.target.value as EmailPlatformId | ''
+                  setLeadPlatform.mutate({ leadId: lead.id, platform: val || null })
+                }}
+                className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 flex-1"
+              >
+                <option value="">— Unassigned —</option>
+                {EMAIL_PLATFORM_OPTIONS.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -513,29 +474,104 @@ export default function LeadDetailDrawer({ lead, onClose, onNavigate, onOpenComp
             )}
 
             {/* ── All Fields Tab ── */}
-            {activeTab === 'details' && (
-              <div className="p-4">
-                <div className="grid grid-cols-2 gap-x-6">
-                  {Object.entries(lead)
-                    .filter(([k]) => !['id', 'lead_type', 'stage', 'stage_label', 'activities'].includes(k))
-                    .map(([key, value]) => (
-                      <div key={key} className="py-2 border-b border-slate-50">
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-0.5">
-                          {key.replace(/_/g, ' ')}
+            {activeTab === 'details' && (() => {
+              const companyName = String(lead.company_name || lead.company || '')
+              const rawDomain = String(lead.company_website || lead.website || '')
+              const domain = rawDomain.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
+              const companyInitials = companyName ? companyName.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) : ''
+              const SectionHeader = ({ title }: { title: string }) => (
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3 mt-5 first:mt-0">{title}</h4>
+              )
+              return (
+                <div className="p-4">
+                  {/* PERSON */}
+                  <SectionHeader title="Person" />
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <InfoRow label="First name" value={lead.first_name} />
+                    <InfoRow label="Last name" value={lead.last_name} />
+                    <InfoRow label="Full name" value={lead.full_name} />
+                    <InfoRow label="Title" value={lead.title || String(lead.job_title || '')} />
+                    <InfoRow label="Email" value={lead.email} isLink />
+                    <InfoRow label="Phone" value={lead.phone} />
+                    <InfoRow label="LinkedIn" value={lead.linkedin} isLink />
+                    <InfoRow label="Instagram" value={lead.instagram} isLink />
+                    <InfoRow label="Specialty" value={lead.specialty} />
+                    <InfoRow label="Sub specialties" value={lead.sub_specialties} />
+                  </div>
+
+                  {/* COMPANY & LOCATION */}
+                  <SectionHeader title="Company (this lead's company)" />
+                  {companyName ? (
+                    <button
+                      onClick={() => { if (onOpenCompany) onOpenCompany(companyName) }}
+                      className="w-full text-left border-l-2 border-blue-500 bg-slate-50 hover:bg-blue-50 rounded-r-lg px-3 py-2.5 mb-3 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded bg-slate-200 flex items-center justify-center shrink-0">
+                            <span className="text-slate-600 font-semibold text-[10px]">{companyInitials}</span>
+                          </div>
+                          <span className="text-sm font-medium text-blue-600 truncate">{companyName}</span>
+                        </div>
+                        <span className="text-xs text-blue-400 flex items-center gap-1 shrink-0">
+                          View company <ExternalLink size={10} />
                         </span>
-                        {value && String(value).startsWith('http') ? (
-                          <a href={String(value)} target="_blank" rel="noreferrer"
-                            className="text-xs text-blue-500 hover:text-blue-600 truncate block">
-                            {String(value).replace(/^https?:\/\/(www\.)?/, '').slice(0, 50)}
-                          </a>
-                        ) : (
-                          <p className="text-xs text-slate-700 truncate">{String(value) || '-'}</p>
-                        )}
                       </div>
-                    ))}
+                      <div className="mt-2 ml-9 grid grid-cols-2 gap-x-4">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Domain</span>
+                          <span className="text-xs text-slate-600">{domain || '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Industry</span>
+                          <span className="text-xs text-slate-600">{String(lead.industry || '') || '—'}</span>
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
+                    <p className="text-xs text-slate-400 mb-3">No company linked</p>
+                  )}
+                  <h5 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Location (this lead's location only)</h5>
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <InfoRow label="City" value={lead.city} />
+                    <InfoRow label="State" value={lead.state} />
+                    <InfoRow label="Country" value={lead.country} />
+                    <InfoRow label="Street address" value={lead.street_address} />
+                    <InfoRow label="Postal code" value={lead.postal_code} />
+                  </div>
+
+                  {/* ENGAGEMENT */}
+                  <SectionHeader title="Engagement" />
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <InfoRow label="Email opens" value={lead.email_opens ?? 0} />
+                    <InfoRow label="Email replies" value={lead.email_replies ?? 0} />
+                    <InfoRow label="Email clicks" value={lead.email_clicks ?? 0} />
+                    <InfoRow label="Email bounced" value={lead.email_bounced != null ? String(lead.email_bounced) : 'false'} />
+                    <InfoRow label="Last email event" value={lead.last_email_event} />
+                    <InfoRow label="Last event at" value={lead.last_email_event_at} />
+                  </div>
+
+                  {/* OUTREACH */}
+                  <SectionHeader title="Outreach" />
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <InfoRow label="Instantly synced" value={lead.instantly_synced != null ? String(lead.instantly_synced) : 'false'} />
+                    <InfoRow label="Campaign ID" value={lead.instantly_campaign_id} />
+                    <InfoRow label="Email status" value={lead.email_status} />
+                    <InfoRow label="Assigned to" value={String(lead.email_platform || 'Unassigned')} />
+                  </div>
+
+                  {/* META */}
+                  <SectionHeader title="Meta" />
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <InfoRow label="Source" value={lead.source} />
+                    <InfoRow label="Created at" value={lead.created_at} />
+                    <InfoRow label="Updated at" value={lead.updated_at} />
+                    <InfoRow label="Raw data" value={lead.raw_data ? '[object]' : '—'} />
+                    <InfoRow label="Notes" value={lead.notes} />
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* ── AI Agent Tab ── */}
             {activeTab === 'ai' && (

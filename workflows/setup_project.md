@@ -1,4 +1,4 @@
-# Setup Project — Dev Environment
+cla# Setup Project — Dev Environment
 
 ## Objective
 Get the AI Medical CRM running locally with backend and frontend.

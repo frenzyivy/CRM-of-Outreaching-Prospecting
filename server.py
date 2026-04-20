@@ -27,6 +27,8 @@ from tools.supabase_client import (
     get_chart_data,
     update_email_engagement,
     get_expenses,
+    set_lead_email_platform,
+    bulk_set_email_platform,
     PIPELINE_STAGES,
     STAGE_LABELS,
 )
@@ -545,6 +547,217 @@ def email_refresh():
 
 
 # =========================================================================
+# Multi-Tool Email Hub
+# =========================================================================
+
+TOOL_MODULES = {
+    "convertkit": "integrations.convertkit",
+    "lemlist": "integrations.lemlist",
+    "smartlead": "integrations.smartlead",
+}
+
+
+def _load_tool(tool: str):
+    import importlib
+    mod_path = TOOL_MODULES.get(tool)
+    if not mod_path:
+        raise HTTPException(status_code=404, detail=f"Unknown tool: {tool}")
+    return importlib.import_module(mod_path)
+
+
+@app.get("/api/email/tools")
+def email_tools_status():
+    """List all email tools and their connection status."""
+    env = _read_env_file()
+    tools = [
+        {
+            "id": "instantly",
+            "name": "Instantly.ai",
+            "connected": bool(env.get("INSTANTLY_API_KEY", "").strip()),
+        },
+        {
+            "id": "convertkit",
+            "name": "ConvertKit",
+            "connected": bool(env.get("CONVERTKIT_API_KEY", "").strip()),
+        },
+        {
+            "id": "lemlist",
+            "name": "Lemlist",
+            "connected": bool(env.get("LEMLIST_API_KEY", "").strip()),
+        },
+        {
+            "id": "smartlead",
+            "name": "Smartlead",
+            "connected": bool(env.get("SMARTLEAD_API_KEY", "").strip()),
+        },
+    ]
+    return {"tools": tools}
+
+
+@app.get("/api/email/all/overview")
+def all_tools_overview():
+    """Combined stats across all 4 email tools for the Overview tab."""
+    from integrations import convertkit, lemlist, smartlead
+
+    # Instantly data
+    instantly_data = get_all_instantly_data()
+    instantly_ov = instantly_data.get("overview", {})
+
+    results = []
+
+    # Instantly
+    inst_sent = instantly_ov.get("emails_sent", 0) or 0
+    results.append({
+        "tool": "instantly",
+        "name": "Instantly.ai",
+        "connected": bool(os.getenv("INSTANTLY_API_KEY", "").strip()),
+        "quota": {
+            "plan_name": "Hypergrowth",
+            "emails_sent": inst_sent,
+            "emails_remaining": None,
+            "contacts_used": instantly_ov.get("leads_count", 0),
+            "contacts_max": None,
+            "reset_date": None,
+            "connected": bool(os.getenv("INSTANTLY_API_KEY", "").strip()),
+        },
+        "aggregate": {
+            "emails_sent": inst_sent,
+            "open_rate": instantly_ov.get("open_rate", 0),
+            "reply_rate": instantly_ov.get("reply_rate", 0),
+            "click_rate": instantly_ov.get("click_rate", 0),
+            "bounce_rate": instantly_ov.get("bounce_rate", 0),
+        },
+    })
+
+    # Other tools
+    for tool_id, mod, name in [
+        ("convertkit", convertkit, "ConvertKit"),
+        ("lemlist", lemlist, "Lemlist"),
+        ("smartlead", smartlead, "Smartlead"),
+    ]:
+        quota = mod.get_account_quota()
+        campaigns = mod.get_campaigns()
+        total_sent = sum(c.get("sent", 0) for c in campaigns)
+        total_opens = sum(c.get("sent", 0) * c.get("open_rate", 0) / 100 for c in campaigns)
+        total_replies = sum(c.get("sent", 0) * c.get("reply_rate", 0) / 100 for c in campaigns)
+        total_clicks = sum(c.get("sent", 0) * c.get("click_rate", 0) / 100 for c in campaigns)
+        total_bounces = sum(c.get("sent", 0) * c.get("bounce_rate", 0) / 100 for c in campaigns)
+        results.append({
+            "tool": tool_id,
+            "name": name,
+            "connected": quota.get("connected", False),
+            "quota": quota,
+            "aggregate": {
+                "emails_sent": total_sent,
+                "open_rate": round(total_opens / max(total_sent, 1) * 100, 1),
+                "reply_rate": round(total_replies / max(total_sent, 1) * 100, 1),
+                "click_rate": round(total_clicks / max(total_sent, 1) * 100, 1),
+                "bounce_rate": round(total_bounces / max(total_sent, 1) * 100, 1),
+            },
+        })
+
+    # Grand totals
+    grand_sent = sum(r["aggregate"]["emails_sent"] for r in results)
+    grand_opens = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["open_rate"] / 100 for r in results)
+    grand_replies = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["reply_rate"] / 100 for r in results)
+    grand_clicks = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["click_rate"] / 100 for r in results)
+    grand_bounces = sum(r["aggregate"]["emails_sent"] * r["aggregate"]["bounce_rate"] / 100 for r in results)
+
+    return {
+        "tools": results,
+        "grand_total": {
+            "emails_sent": grand_sent,
+            "open_rate": round(grand_opens / max(grand_sent, 1) * 100, 1),
+            "reply_rate": round(grand_replies / max(grand_sent, 1) * 100, 1),
+            "click_rate": round(grand_clicks / max(grand_sent, 1) * 100, 1),
+            "bounce_rate": round(grand_bounces / max(grand_sent, 1) * 100, 1),
+        },
+        "error": None,
+    }
+
+
+@app.get("/api/email/{tool}/overview")
+def tool_email_overview(tool: str):
+    """Quota + aggregate campaign stats for a single email tool."""
+    mod = _load_tool(tool)
+    quota = mod.get_account_quota()
+    campaigns = mod.get_campaigns()
+
+    total_sent = sum(c.get("sent", 0) for c in campaigns)
+    total_opens = sum(c.get("sent", 0) * c.get("open_rate", 0) / 100 for c in campaigns)
+    total_replies = sum(c.get("sent", 0) * c.get("reply_rate", 0) / 100 for c in campaigns)
+    total_clicks = sum(c.get("sent", 0) * c.get("click_rate", 0) / 100 for c in campaigns)
+    total_bounces = sum(c.get("sent", 0) * c.get("bounce_rate", 0) / 100 for c in campaigns)
+
+    return {
+        "quota": quota,
+        "aggregate": {
+            "emails_sent": total_sent,
+            "open_rate": round(total_opens / max(total_sent, 1) * 100, 1),
+            "reply_rate": round(total_replies / max(total_sent, 1) * 100, 1),
+            "click_rate": round(total_clicks / max(total_sent, 1) * 100, 1),
+            "bounce_rate": round(total_bounces / max(total_sent, 1) * 100, 1),
+        },
+        "error": None,
+    }
+
+
+@app.get("/api/email/{tool}/campaigns")
+def tool_email_campaigns(tool: str):
+    """Campaign list with stats for a single email tool."""
+    mod = _load_tool(tool)
+    return {"campaigns": mod.get_campaigns(), "error": None}
+
+
+@app.get("/api/email/{tool}/daily")
+def tool_email_daily(tool: str, days: int = Query(default=30, ge=1, le=90)):
+    """Daily send stats for a single email tool."""
+    mod = _load_tool(tool)
+    return {"daily": mod.get_daily_stats(days), "error": None}
+
+
+
+
+# Lead email platform assignment
+
+class EmailPlatformRequest(BaseModel):
+    platform: str | None = None
+
+
+class BulkEmailPlatformRequest(BaseModel):
+    lead_ids: list[str]
+    platform: str | None = None
+
+
+@app.patch("/api/leads/{lead_id}/email-platform")
+def set_lead_platform(lead_id: str, body: EmailPlatformRequest):
+    """Assign or clear the email_platform on a single lead."""
+    from tools.supabase_client import set_lead_email_platform
+    from core.constants import EMAIL_PLATFORMS
+    if body.platform and body.platform not in EMAIL_PLATFORMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Choose from: {list(EMAIL_PLATFORMS.keys())}",
+        )
+    result = set_lead_email_platform(lead_id, body.platform)
+    return {"status": "ok", "lead_id": lead_id, "platform": body.platform, "data": result}
+
+
+@app.post("/api/leads/bulk-assign-platform")
+def bulk_assign_platform(body: BulkEmailPlatformRequest):
+    """Bulk-assign email_platform to a list of lead IDs."""
+    from tools.supabase_client import bulk_set_email_platform
+    from core.constants import EMAIL_PLATFORMS
+    if body.platform and body.platform not in EMAIL_PLATFORMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid platform. Choose from: {list(EMAIL_PLATFORMS.keys())}",
+        )
+    count = bulk_set_email_platform(body.lead_ids, body.platform)
+    return {"status": "ok", "updated": count, "platform": body.platform}
+
+
+# =========================================================================
 # Supabase → Instantly Sync
 # =========================================================================
 
@@ -658,6 +871,7 @@ INTEGRATION_ENV_KEYS: dict[str, list[str]] = {
     "kaspr":          ["KASPR_API_KEY"],
     "phantombuster":  ["PHANTOMBUSTER_API_KEY"],
     # ── Email Outreach ──
+    "convertkit":     ["CONVERTKIT_API_KEY"],
     "lemlist":        ["LEMLIST_API_KEY"],
     "smartlead":      ["SMARTLEAD_API_KEY"],
     "woodpecker":     ["WOODPECKER_API_KEY"],
@@ -986,6 +1200,25 @@ def mark_all_notifications_read():
     from tools.supabase_client import mark_all_notifications_read as db_mark_all_read
     db_mark_all_read()
     return {"status": "ok"}
+
+
+# =========================================================================
+# Companies (normalized — requires migration to have been run)
+# =========================================================================
+
+@app.get("/api/companies")
+def list_companies():
+    from core.supabase_client import get_companies
+    return get_companies()
+
+
+@app.get("/api/companies/{company_id}")
+def get_company(company_id: str):
+    from core.supabase_client import get_company_detail
+    result = get_company_detail(company_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return result
 
 
 # =========================================================================

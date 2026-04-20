@@ -1,0 +1,97 @@
+/* ============================================================================
+   Alainza CRM — Design Tokens (dark + light themes)
+   Applied via data-theme="dark" | "light" on <html>
+   Switched by ThemeContext; persisted in localStorage key `alainza-theme`.
+   ============================================================================ */
+
+:root[data-theme="dark"] {
+  --bg: #0B1220;
+  --bg-2: #0F172A;
+  --surface: #1E293B;
+  --surface-2: #273449;
+  --surface-3: #334155;
+
+  --ink: #F4F5F7;
+  --ink-2: #CBD5E1;
+  --ink-3: #9CA3AF;
+  --ink-4: #6B7280;
+
+  --line: rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.12);
+
+  --brand: #2563EB;
+  --brand-2: #60A5FA;
+  --brand-soft: rgba(37, 99, 235, 0.15);
+  --brand-border: rgba(37, 99, 235, 0.3);
+
+  --success: #4ADE80;
+  --success-soft: rgba(34, 197, 94, 0.15);
+  --warn: #FBBF24;
+  --warn-soft: rgba(245, 158, 11, 0.15);
+  --danger: #F87171;
+  --danger-soft: rgba(239, 68, 68, 0.15);
+  --accent: #A78BFA;
+  --accent-soft: rgba(167, 139, 250, 0.15);
+
+  --chart-grid: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="light"] {
+  --bg: #F0F6FF;
+  --bg-2: #E6F0FB;
+  --surface: #FFFFFF;
+  --surface-2: #F4F9FF;
+  --surface-3: #E1ECFA;
+
+  --ink: #0F1E3D;
+  --ink-2: #1E3A68;
+  --ink-3: #4B6891;
+  --ink-4: #7890B4;
+
+  --line: rgba(30, 79, 216, 0.10);
+  --line-2: rgba(30, 79, 216, 0.18);
+
+  --brand: #1E4FD8;
+  --brand-2: #3B82F6;
+  --brand-soft: #DBEAFE;
+  --brand-border: rgba(30, 79, 216, 0.25);
+
+  --success: #047857;
+  --success-soft: #D1FAE5;
+  --warn: #A16207;
+  --warn-soft: #FEF3C7;
+  --danger: #B91C1C;
+  --danger-soft: #FEE2E2;
+  --accent: #6D28D9;
+  --accent-soft: #EDE9FE;
+
+  --chart-grid: rgba(30, 79, 216, 0.08);
+}
+
+/* Fallback if attribute missing — default to dark. */
+:root:not([data-theme]) {
+  --bg: #0B1220;
+  --bg-2: #0F172A;
+  --surface: #1E293B;
+  --surface-2: #273449;
+  --surface-3: #334155;
+  --ink: #F4F5F7;
+  --ink-2: #CBD5E1;
+  --ink-3: #9CA3AF;
+  --ink-4: #6B7280;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.12);
+  --brand: #2563EB;
+  --brand-2: #60A5FA;
+  --brand-soft: rgba(37, 99, 235, 0.15);
+  --brand-border: rgba(37, 99, 235, 0.3);
+  --success: #4ADE80;
+  --success-soft: rgba(34, 197, 94, 0.15);
+  --warn: #FBBF24;
+  --warn-soft: rgba(245, 158, 11, 0.15);
+  --danger: #F87171;
+  --danger-soft: rgba(239, 68, 68, 0.15);
+  --accent: #A78BFA;
+  --accent-soft: rgba(167, 139, 250, 0.15);
+  --chart-grid: rgba(255, 255, 255, 0.05);
+}

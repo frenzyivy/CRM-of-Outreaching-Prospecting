@@ -4,10 +4,11 @@ import { usePeopleView } from '../../hooks/useLeads'
 import Badge from '../common/Badge'
 import LeadScoreBadge from '../common/LeadScoreBadge'
 import type { Lead } from '../../types'
-import { hasCompanyData } from '../../types'
 
 interface Props {
   onSelect: (lead: Lead, filteredLeads?: Lead[]) => void
+  onSelectCompany?: (companyName: string) => void
+  initialSearch?: string
 }
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200, 500]
@@ -26,17 +27,34 @@ function EmailStatusBadge({ status }: { status: string }) {
   return <span className="text-xs text-slate-400">{status || '—'}</span>
 }
 
-function CompanyDataBadge({ value }: { value: string }) {
-  const v = (value || '').toLowerCase()
-  if (v === 'yes') {
-    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Yes</span>
-  }
-  return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500">No</span>
+const PLATFORM_COLORS: Record<string, string> = {
+  instantly: 'bg-blue-100 text-blue-700',
+  convertkit: 'bg-orange-100 text-orange-700',
+  lemlist: 'bg-purple-100 text-purple-700',
+  smartlead: 'bg-emerald-100 text-emerald-700',
 }
 
-export default function LeadsTable({ onSelect }: Props) {
+const PLATFORM_LABELS: Record<string, string> = {
+  instantly: 'Instantly',
+  convertkit: 'ConvertKit',
+  lemlist: 'Lemlist',
+  smartlead: 'Smartlead',
+}
+
+function EmailPlatformBadge({ platform }: { platform: string }) {
+  const cls = PLATFORM_COLORS[platform] || 'bg-slate-100 text-slate-600'
+  const label = PLATFORM_LABELS[platform] || platform
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${cls}`}>
+      {label}
+    </span>
+  )
+}
+
+
+export default function LeadsTable({ onSelect, onSelectCompany, initialSearch = '' }: Props) {
   const { data: leads, isLoading } = usePeopleView()
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch)
   const [sourceFilter, setSourceFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [countryFilter, setCountryFilter] = useState('all')
@@ -328,13 +346,11 @@ export default function LeadsTable({ onSelect }: Props) {
               <th className="px-4 py-3 font-medium text-slate-600">Email</th>
               <th className="px-4 py-3 font-medium text-slate-600">Status</th>
               <th className="px-4 py-3 font-medium text-slate-600">Location</th>
-              <th className="px-4 py-3 font-medium text-slate-600">Co. Data</th>
               <th className="px-4 py-3 font-medium text-slate-600">Specialty</th>
-              <th className="px-4 py-3 font-medium text-slate-600">Rating</th>
-              <th className="px-4 py-3 font-medium text-slate-600">Co. Size</th>
               <th className="px-4 py-3 font-medium text-slate-600">Source</th>
               <th className="px-4 py-3 font-medium text-slate-600">Score</th>
               <th className="px-4 py-3 font-medium text-slate-600">Stage</th>
+              <th className="px-4 py-3 font-medium text-slate-600">Email Tool</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -350,7 +366,19 @@ export default function LeadsTable({ onSelect }: Props) {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-slate-600 max-w-32 truncate">{lead.title || '—'}</td>
-                <td className="px-4 py-3 text-slate-600 max-w-36 truncate">{lead.company_name || '—'}</td>
+                <td className="px-4 py-3 max-w-36">
+                  {(lead.company_name) ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (onSelectCompany) onSelectCompany(lead.company_name as string)
+                      }}
+                      className="text-blue-600 hover:text-blue-800 hover:underline text-sm truncate max-w-full text-left"
+                    >
+                      {lead.company_name}
+                    </button>
+                  ) : <span className="text-slate-400">—</span>}
+                </td>
                 <td className="px-4 py-3 text-slate-500 text-xs max-w-44 truncate">{lead.email || '—'}</td>
                 <td className="px-4 py-3">
                   <EmailStatusBadge status={lead.email_status || ''} />
@@ -358,19 +386,7 @@ export default function LeadsTable({ onSelect }: Props) {
                 <td className="px-4 py-3 text-slate-500 text-xs">
                   {[lead.city, lead.country].filter(Boolean).join(', ') || '—'}
                 </td>
-                <td className="px-4 py-3">
-                  <CompanyDataBadge value={hasCompanyData(lead) ? 'Yes' : 'No'} />
-                </td>
                 <td className="px-4 py-3 text-slate-600 text-xs max-w-32 truncate">{lead.specialty || '—'}</td>
-                <td className="px-4 py-3 text-slate-500 text-xs">
-                  {lead.star_rating ? (
-                    <span className="inline-flex items-center gap-1">
-                      <span className="text-amber-500">★</span> {lead.star_rating}
-                      {lead.number_of_reviews && <span className="text-slate-400">({lead.number_of_reviews})</span>}
-                    </span>
-                  ) : '—'}
-                </td>
-                <td className="px-4 py-3 text-slate-500 text-xs">{lead.company_size || '—'}</td>
                 <td className="px-4 py-3 text-slate-500 text-xs">{lead.source || '—'}</td>
                 <td className="px-4 py-3">
                   {lead.lead_tier ? (
@@ -382,11 +398,18 @@ export default function LeadsTable({ onSelect }: Props) {
                 <td className="px-4 py-3">
                   <Badge stage={lead.stage} label={lead.stage_label} />
                 </td>
+                <td className="px-4 py-3">
+                  {lead.email_platform ? (
+                    <EmailPlatformBadge platform={lead.email_platform as string} />
+                  ) : (
+                    <span className="text-xs text-slate-300">—</span>
+                  )}
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={11} className="px-4 py-8 text-center text-slate-400">
                   No leads found
                 </td>
               </tr>

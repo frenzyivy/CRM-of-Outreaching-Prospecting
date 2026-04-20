@@ -1,0 +1,21 @@
+Baseline captured before the Phase-1 housekeeping pass.
+Command: npx tsc -p tsconfig.app.json --noEmit
+20 errors across 9 files. All in files untouched by the Phase 1 redesign.
+
+src/components/ai/AssistantPage.tsx(1,39): error TS1484: 'KeyboardEvent' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/email/ExpandedAccountDetail.tsx(1,48): error TS6196: 'EmailPlatform' is declared but never used.
+src/components/email/ExpandedAccountDetail.tsx(11,58): error TS2322: Type 'string' is not assignable to type 'never'.
+src/components/email/ExpandedAccountDetail.tsx(12,58): error TS2322: Type 'string' is not assignable to type 'never'.
+src/components/email/ExpandedAccountDetail.tsx(13,58): error TS2322: Type 'string' is not assignable to type 'never'.
+src/components/email/ExpandedAccountDetail.tsx(14,58): error TS2322: Type 'string' is not assignable to type 'never'.
+src/components/email/ExpandedAccountDetail.tsx(15,58): error TS2322: Type 'string' is not assignable to type 'never'.
+src/components/email/InstantlyTab.tsx(57,3): error TS6196: 'CampaignDetail' is declared but never used.
+src/components/email/InstantlyTab.tsx(942,23): error TS2322: Type '(v: string) => string' is not assignable to type '((label: ReactNode, payload: readonly Payload<ValueType, NameType>[]) => ReactNode) & ((label: any, payload: TooltipPayload) => ReactNode)'.
+src/components/email/OpenIntelligenceTab.tsx(26,3): error TS6133: 'Cell' is declared but its value is never read.
+src/components/email/OpenIntelligenceTab.tsx(275,37): error TS2503: Cannot find namespace 'JSX'.
+src/components/email/OpenIntelligenceTab.tsx(477,13): error TS2322: Type '(val: number, name: string) => [number, string]' is not assignable to type 'Formatter<ValueType, NameType> & ...'.
+src/components/email/OpenIntelligenceTab.tsx(516,13): error TS2322: Type '(val: number, name: string) => [number, string]' is not assignable to type 'Formatter<ValueType, NameType> & ...'.
+src/components/email/PlatformTab.tsx(1,30): error TS6196: 'EmailAccount' is declared but never used.
+src/components/groups/GroupsPage.tsx(14,7): error TS6133: 'STAGE_LABEL' is declared but its value is never read.
+src/components/leads/LeadsPage.tsx(30,24): error TS6133: 'setAllCompanies' is declared but its value is never read.
+src/contexts/RealtimeSyncContext.tsx(1,79): error TS1484: 'ReactNode' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.

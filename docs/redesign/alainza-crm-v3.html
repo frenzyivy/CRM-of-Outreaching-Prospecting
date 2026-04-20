@@ -1,0 +1,4238 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Alainza CRM · v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     DUAL THEME — dark (navy/blue) & light (sky-blue/white)
+     ============================================================ */
+  :root[data-theme="dark"] {
+    --bg: #0B1220;
+    --bg-2: #0F172A;
+    --surface: #1E293B;
+    --surface-2: #273449;
+    --surface-3: #334155;
+    --ink: #F4F5F7;
+    --ink-2: #CBD5E1;
+    --ink-3: #9CA3AF;
+    --ink-4: #6B7280;
+    --line: rgba(255, 255, 255, 0.06);
+    --line-2: rgba(255, 255, 255, 0.12);
+    --brand: #2563EB;
+    --brand-2: #60A5FA;
+    --brand-soft: rgba(37, 99, 235, 0.15);
+    --brand-border: rgba(37, 99, 235, 0.3);
+    --success: #4ADE80;
+    --success-soft: rgba(34, 197, 94, 0.15);
+    --warn: #FBBF24;
+    --warn-soft: rgba(245, 158, 11, 0.15);
+    --danger: #F87171;
+    --danger-soft: rgba(239, 68, 68, 0.15);
+    --accent: #A78BFA;
+    --accent-soft: rgba(167, 139, 250, 0.15);
+    --chart-grid: rgba(255, 255, 255, 0.05);
+  }
+  :root[data-theme="light"] {
+    --bg: #F0F6FF;
+    --bg-2: #E6F0FB;
+    --surface: #FFFFFF;
+    --surface-2: #F4F9FF;
+    --surface-3: #E1ECFA;
+    --ink: #0F1E3D;
+    --ink-2: #1E3A68;
+    --ink-3: #4B6891;
+    --ink-4: #7890B4;
+    --line: rgba(30, 79, 216, 0.10);
+    --line-2: rgba(30, 79, 216, 0.18);
+    --brand: #1E4FD8;
+    --brand-2: #3B82F6;
+    --brand-soft: #DBEAFE;
+    --brand-border: rgba(30, 79, 216, 0.25);
+    --success: #047857;
+    --success-soft: #D1FAE5;
+    --warn: #A16207;
+    --warn-soft: #FEF3C7;
+    --danger: #B91C1C;
+    --danger-soft: #FEE2E2;
+    --accent: #6D28D9;
+    --accent-soft: #EDE9FE;
+    --chart-grid: rgba(30, 79, 216, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Geist', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.25s, color 0.25s;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, textarea { font-family: inherit; }
+
+  /* ============================================================
+     APP SHELL
+     ============================================================ */
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--bg);
+    border-right: 1px solid var(--line);
+    padding: 18px 12px 14px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 2px 8px 14px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 10px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    background: var(--brand); color: white;
+    border-radius: 7px;
+    display: grid; place-items: center;
+    font-weight: 600; font-size: 14px;
+  }
+  .brand-name {
+    font-size: 14px; font-weight: 500;
+    color: var(--ink);
+  }
+  .brand-sub {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    color: var(--ink-4);
+    letter-spacing: 0.04em;
+    margin-top: -1px;
+  }
+  .nav-group {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    color: var(--ink-4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 10px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    width: 100%; text-align: left;
+    transition: background 0.12s, color 0.12s;
+  }
+  .nav-item:hover { background: var(--surface); color: var(--ink); }
+  .nav-item.active { background: var(--brand); color: white; }
+  .nav-item .icn {
+    width: 14px; height: 14px; flex-shrink: 0;
+    opacity: 0.8;
+  }
+  .nav-item.active .icn { opacity: 1; }
+  .nav-item .ct {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px;
+    background: var(--surface);
+    color: var(--ink-2);
+    padding: 1px 7px;
+    border-radius: 9px;
+  }
+  .nav-item.active .ct { background: rgba(255,255,255,0.2); color: white; }
+  .nav-item .ct.hot { background: var(--danger); color: white; }
+  .nav-item.active .ct.hot { background: white; color: var(--brand); }
+  .side-foot {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--accent));
+    color: white;
+    display: grid; place-items: center;
+    font-weight: 500; font-size: 12px;
+  }
+  .user-name { font-size: 12.5px; font-weight: 500; color: var(--ink); }
+  .user-role { font-size: 10px; color: var(--ink-4); font-family: 'Geist Mono', monospace; }
+
+  /* Main */
+  .main { overflow-y: auto; max-height: 100vh; background: var(--bg-2); }
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(10px);
+  }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 6px 12px;
+    min-width: 300px;
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+  .search kbd {
+    margin-left: auto;
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    background: var(--surface-2);
+    color: var(--ink-3);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .top-right { display: flex; align-items: center; gap: 10px; }
+  .sync-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    padding: 4px 9px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .icon-btn {
+    width: 32px; height: 32px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink-2);
+    display: grid; place-items: center;
+    transition: background 0.12s;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+  /* Content */
+  .content { padding: 24px 28px 48px; }
+  .view { display: none; animation: fadeIn 0.25s; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Page header */
+  .page-head { margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .page-head h1 {
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .page-head h1 em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--brand-2);
+  }
+  .page-sub { font-size: 13px; color: var(--ink-3); }
+  .page-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    transition: all 0.12s;
+  }
+  .chip:hover { border-color: var(--line-2); color: var(--ink); }
+  .chip.active { background: var(--brand); color: white; border-color: var(--brand); }
+  .chip.live { background: var(--success-soft); color: var(--success); border-color: transparent; }
+
+  /* ============================================================
+     COMPONENTS — shared
+     ============================================================ */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .card-t {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .card-t-lg {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .btn {
+    background: var(--surface-2);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.12s;
+  }
+  .btn:hover { background: var(--surface-3); border-color: var(--line-2); }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: white; }
+  .btn.primary:hover { background: var(--brand-2); border-color: var(--brand-2); }
+  .btn.sm { padding: 4px 9px; font-size: 11px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    position: relative;
+  }
+  .kpi-l {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .kpi-v {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .kpi-v small { font-size: 16px; color: var(--ink-3); font-weight: 400; }
+  .kpi-d {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-4);
+    margin-top: 4px;
+  }
+  .kpi-d.up { color: var(--success); }
+  .kpi-d.down { color: var(--danger); }
+
+  .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+
+  /* ============================================================
+     TODAY PAGE
+     ============================================================ */
+  .queue-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .queue-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--danger) 0%, var(--warn) 35%, var(--brand) 70%, var(--success) 100%);
+  }
+  .queue-head {
+    padding: 13px 18px 11px 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .queue-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 13px 18px 13px 22px;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.12s;
+    cursor: pointer;
+  }
+  .queue-row:last-child { border-bottom: none; }
+  .queue-row:hover { background: var(--surface-2); }
+  .qbadge {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    text-align: center;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .qbadge.reply { background: var(--danger-soft); color: var(--danger); }
+  .qbadge.mtg { background: var(--warn-soft); color: var(--warn); }
+  .qbadge.approve { background: var(--brand-soft); color: var(--brand-2); }
+  .qbadge.cold { background: var(--surface-3); color: var(--ink-2); }
+  .qbadge.close { background: var(--success-soft); color: var(--success); }
+  .q-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .q-sub {
+    font-size: 12px;
+    color: var(--ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 460px;
+  }
+
+  /* Heatmap */
+  .heatmap {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 3px;
+    margin: 12px 0 8px;
+  }
+  .hcell {
+    aspect-ratio: 1;
+    max-height: 26px;
+    border-radius: 3px;
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+  .hcell:hover { transform: scale(1.15); }
+  .hcell.today { outline: 1.5px solid var(--brand-2); outline-offset: 1px; }
+  .hlbl {
+    display: flex; justify-content: space-between;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-4);
+    margin-bottom: 10px;
+  }
+  .ttiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .ttile {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .tnum {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .tlbl {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-4);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* Schedule rows */
+  .sch-row {
+    display: grid;
+    grid-template-columns: 48px 54px 1fr 46px;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    font-size: 12.5px;
+  }
+  .sch-row:last-child { border: none; }
+  .sch-day {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .sch-time {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .sch-name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sch-chan {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--brand-soft);
+    color: var(--brand-2);
+    text-align: center;
+  }
+  .sch-chan.call { background: var(--success-soft); color: var(--success); }
+
+  /* ============================================================
+     PIPELINE — 7 stages preserved
+     ============================================================ */
+  .pipe-toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .pipe-search {
+    flex: 1; min-width: 240px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 8px 12px;
+    color: var(--ink);
+    font-size: 13px;
+    outline: none;
+  }
+  .pipe-search:focus { border-color: var(--brand); }
+  .pipe-scroll {
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin: 0 -28px;
+    padding: 0 28px 14px;
+  }
+  .pipe-cols {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(200px, 1fr));
+    gap: 10px;
+    min-width: 1400px;
+  }
+  .stage-col {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 10px 14px;
+  }
+  .stage-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+    padding: 6px 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .stage-title {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stage-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .stage-count {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  .lcard {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 9px 11px;
+    margin-bottom: 7px;
+    position: relative;
+    cursor: grab;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .lcard:hover { border-color: var(--brand-border); transform: translateY(-1px); }
+  .lcard:active { cursor: grabbing; }
+  .lcard-name {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .lcard-meta {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    display: flex; align-items: center; gap: 4px;
+    margin-bottom: 2px;
+    font-family: 'Geist Mono', monospace;
+  }
+  .lcard-meta svg { width: 10px; height: 10px; opacity: 0.6; }
+  .lcard-tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-top: 5px;
+    display: inline-block;
+    background: var(--surface-3);
+    color: var(--ink-2);
+  }
+  .heat-dot {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+  .heat-red { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+  .heat-amber { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+  .heat-green { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+  .empty-lcard {
+    text-align: center;
+    padding: 24px 10px;
+    color: var(--ink-4);
+    font-size: 11px;
+    font-family: 'Geist Mono', monospace;
+  }
+  .pipe-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) auto;
+    gap: 18px;
+    padding: 18px 22px;
+    background: var(--surface);
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    margin-top: 16px;
+    align-items: center;
+  }
+  .ps-l {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .ps-v { font-size: 22px; font-weight: 500; color: var(--ink); line-height: 1; letter-spacing: -0.01em; }
+  .ps-v small { font-size: 12px; color: var(--ink-3); font-weight: 400; }
+
+  /* ============================================================
+     UNIFIED INBOX
+     ============================================================ */
+  .inbox-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 12px;
+    height: calc(100vh - 200px);
+    min-height: 600px;
+  }
+  .inbox-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .inbox-filters {
+    padding: 12px;
+    border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 5px;
+  }
+  .inbox-scroll { flex: 1; overflow-y: auto; }
+  .inbox-row {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 10px;
+    transition: background 0.12s;
+    position: relative;
+  }
+  .inbox-row:hover { background: var(--surface-2); }
+  .inbox-row.selected { background: var(--brand-soft); }
+  .inbox-row.selected::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--brand);
+  }
+  .ib-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    display: grid; place-items: center;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  .ib-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 2px;
+  }
+  .ib-name { font-size: 12.5px; font-weight: 500; color: var(--ink); }
+  .ib-time {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-4);
+  }
+  .ib-preview {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ib-chan {
+    display: inline-block;
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ib-chan.email { background: var(--danger-soft); color: var(--danger); }
+  .ib-chan.wa { background: var(--success-soft); color: var(--success); }
+  .ib-chan.li { background: var(--brand-soft); color: var(--brand-2); }
+  .ib-chan.call { background: var(--warn-soft); color: var(--warn); }
+
+  /* Thread */
+  .thread-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .thread-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .thread-lead {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .thread-lead-meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    margin-top: 2px;
+  }
+  .thread-body {
+    flex: 1; overflow-y: auto;
+    padding: 18px;
+    background: var(--bg-2);
+  }
+  .msg {
+    max-width: 72%;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .msg-in {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 3px;
+  }
+  .msg-out {
+    margin-left: auto;
+    background: var(--brand);
+    color: white;
+    border-bottom-right-radius: 3px;
+  }
+  .msg-meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-4);
+    margin-top: 4px;
+  }
+  .msg-out .msg-meta { color: rgba(255,255,255,0.6); text-align: right; }
+  .thread-reply {
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .reply-channels { display: flex; gap: 5px; margin-bottom: 10px; }
+  .reply-box {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: var(--ink);
+    resize: none;
+    min-height: 62px;
+    outline: none;
+  }
+  .reply-box:focus { border-color: var(--brand); }
+  .reply-actions {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px;
+  }
+  .ai-hint {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  /* ============================================================
+     EMAIL ANALYTICS
+     ============================================================ */
+  .esp-tabs {
+    display: flex; gap: 3px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+    overflow-x: auto;
+  }
+  .esp-tab {
+    padding: 9px 14px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.12s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .esp-tab:hover { color: var(--ink); }
+  .esp-tab.active { color: var(--brand-2); border-bottom-color: var(--brand-2); }
+  .esp-tab .ico { width: 12px; height: 12px; }
+
+  .kpi-pill {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .kpi-icn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .kpi-icn.sent { background: var(--brand-soft); color: var(--brand-2); }
+  .kpi-icn.open { background: var(--success-soft); color: var(--success); }
+  .kpi-icn.reply { background: var(--accent-soft); color: var(--accent); }
+  .kpi-icn.click { background: var(--brand-soft); color: var(--brand-2); }
+  .kpi-icn.bounce { background: var(--danger-soft); color: var(--danger); }
+  .kpi-icn.unsub { background: var(--warn-soft); color: var(--warn); }
+  .kpi-pill .kpi-l { margin-bottom: 3px; }
+  .kpi-pill .kpi-v { font-size: 22px; }
+
+  .camp-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 70px;
+    gap: 14px;
+    padding: 11px 0;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .camp-row:last-child { border: none; }
+  .camp-name { font-weight: 500; color: var(--ink); }
+  .camp-name small {
+    display: block;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .bar-track {
+    background: var(--surface-2);
+    border-radius: 3px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease-out;
+  }
+  .bar-g { background: var(--success); }
+  .bar-m { background: var(--warn); }
+  .bar-b { background: var(--danger); }
+  .camp-pct {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11.5px;
+    text-align: right;
+    font-weight: 500;
+  }
+  .camp-pct.good { color: var(--success); }
+  .camp-pct.bad { color: var(--danger); }
+
+  /* Daily activity chart */
+  .chart-wrap {
+    height: 200px;
+    position: relative;
+    padding: 10px 0;
+  }
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    height: 180px;
+    gap: 3px;
+    padding-left: 28px;
+    border-bottom: 1px solid var(--chart-grid);
+    border-left: 1px solid var(--chart-grid);
+  }
+  .chart-day {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .chart-bar-grp { display: flex; gap: 1px; width: 100%; height: 100%; align-items: flex-end; }
+  .chart-bar {
+    flex: 1;
+    border-radius: 2px 2px 0 0;
+    transition: opacity 0.15s;
+    min-height: 1px;
+  }
+  .chart-bar:hover { opacity: 0.7; }
+  .chart-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-4);
+    margin-top: 3px;
+  }
+  .chart-legend {
+    display: flex; gap: 14px;
+    justify-content: center;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .chart-legend span { display: flex; align-items: center; gap: 5px; }
+  .legend-sw {
+    width: 8px; height: 8px; border-radius: 2px;
+  }
+
+  /* Donut ring */
+  .donut {
+    position: relative;
+    width: 130px; height: 130px;
+    margin: 12px auto 14px;
+  }
+  .donut svg { transform: rotate(-90deg); }
+  .donut-ctr {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .donut-ctr-v {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .donut-ctr-l {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-4);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .donut-legend {
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 11px;
+  }
+  .donut-lrow {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 0;
+  }
+  .donut-lrow-l { display: flex; align-items: center; gap: 7px; color: var(--ink-2); }
+  .donut-lrow-v { font-family: 'Geist Mono', monospace; color: var(--ink-3); font-size: 10.5px; }
+
+  /* ============================================================
+     LEADS — Company Data / Lead Data / Analytics tabs
+     ============================================================ */
+  .leads-tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .leads-tab {
+    padding: 9px 14px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    border-bottom: 2px solid transparent;
+    display: flex; align-items: center; gap: 6px;
+    transition: color 0.12s;
+  }
+  .leads-tab:hover { color: var(--ink); }
+  .leads-tab.active { color: var(--brand-2); border-bottom-color: var(--brand-2); }
+
+  .data-table {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .dt-head, .dt-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1.1fr 70px 130px 100px 80px 70px;
+    gap: 12px;
+    padding: 10px 16px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .dt-head {
+    background: var(--surface-2);
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+  }
+  .dt-row { border-bottom: 1px solid var(--line); transition: background 0.12s; cursor: pointer; }
+  .dt-row:last-child { border: none; }
+  .dt-row:hover { background: var(--surface-2); }
+  .dt-company { font-weight: 500; color: var(--ink); }
+  .dt-company small {
+    display: block;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .dt-pill {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--success-soft);
+    color: var(--success);
+    display: inline-block;
+  }
+  .dt-stage {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    display: inline-block;
+  }
+
+  /* ============================================================
+     REVENUE PAGE
+     ============================================================ */
+  .rev-hero {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .rev-hero-card {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+    border-radius: 14px;
+    padding: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .rev-hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40%; right: -20%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+    border-radius: 50%;
+  }
+  .rev-hero-l {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    opacity: 0.85;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .rev-hero-v {
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .rev-hero-v small { font-size: 18px; opacity: 0.85; font-weight: 400; }
+  .rev-hero-sub { font-size: 13px; opacity: 0.9; margin-bottom: 16px; }
+  .rev-hero-ticks {
+    display: flex; gap: 14px; padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .rev-tick-l { font-size: 10.5px; opacity: 0.85; margin-bottom: 3px; font-family: 'Geist Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rev-tick-v { font-size: 16px; font-weight: 500; }
+  .rev-forecast {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .forecast-months {
+    margin-top: 14px;
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    align-items: flex-end;
+    height: 130px;
+  }
+  .forecast-bar {
+    border-radius: 4px 4px 0 0;
+    transition: opacity 0.15s;
+    position: relative;
+  }
+  .forecast-bar:hover { opacity: 0.8; }
+  .forecast-bar.past { background: var(--brand); }
+  .forecast-bar.curr { background: var(--brand-2); }
+  .forecast-bar.fc { background: repeating-linear-gradient(45deg, var(--brand-2), var(--brand-2) 4px, transparent 4px, transparent 8px); border: 1px dashed var(--brand-border); }
+  .forecast-lbl {
+    text-align: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    margin-top: 4px;
+  }
+  .forecast-val {
+    text-align: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  /* Revenue breakdown */
+  .rev-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  /* Segment P&L */
+  .pnl-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pnl-table th {
+    text-align: left;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+  }
+  .pnl-table td {
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-2);
+  }
+  .pnl-table tr:last-child td { border: none; }
+  .pnl-table td.num {
+    font-family: 'Geist Mono', monospace;
+    text-align: right;
+  }
+  .pnl-table td.seg { color: var(--ink); font-weight: 500; }
+  .pnl-table td.pos { color: var(--success); }
+  .pnl-table td.neg { color: var(--danger); }
+
+  .deal-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 70px;
+    gap: 12px;
+    padding: 11px 0;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .deal-row:last-child { border: none; }
+  .deal-name { color: var(--ink); font-weight: 500; }
+  .deal-name small { display: block; font-size: 10.5px; color: var(--ink-3); font-weight: 400; font-family: 'Geist Mono', monospace; margin-top: 2px; }
+  .deal-val { font-family: 'Geist Mono', monospace; font-weight: 500; color: var(--ink); text-align: right; }
+  .deal-type {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    text-align: center;
+  }
+  .deal-type.mrr { background: var(--accent-soft); color: var(--accent); }
+  .deal-type.setup { background: var(--brand-soft); color: var(--brand-2); }
+
+  /* ============================================================
+     CALLS, WHATSAPP, GROUPS, AI ASSISTANT, PERFORMANCE, CALENDAR, INTEGRATIONS
+     ============================================================ */
+  .placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .feat-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .feat-card h4 { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .feat-card p { font-size: 12px; color: var(--ink-3); line-height: 1.6; }
+
+  /* AI Assistant */
+  .assistant-wrap {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 14px;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+  }
+  .conv-side {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex; flex-direction: column;
+  }
+  .conv-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--ink-2);
+    cursor: pointer;
+    margin-bottom: 3px;
+  }
+  .conv-item:hover { background: var(--surface-2); }
+  .conv-item.active { background: var(--brand-soft); color: var(--brand-2); border: 1px solid var(--brand-border); }
+  .chat-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .chat-body {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .chat-sparkle {
+    width: 56px; height: 56px;
+    background: var(--brand-soft);
+    border-radius: 14px;
+    display: grid; place-items: center;
+    margin: 0 auto 16px;
+    color: var(--brand-2);
+  }
+  .chat-welcome {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 5px;
+  }
+  .chat-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    max-width: 420px;
+    margin-bottom: 22px;
+  }
+  .chat-suggestions {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    max-width: 500px;
+    justify-content: center;
+  }
+  .chat-sugg {
+    padding: 7px 12px;
+    font-size: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    color: var(--ink-2);
+  }
+  .chat-sugg:hover { border-color: var(--brand-border); color: var(--ink); }
+  .chat-input {
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+    display: flex; gap: 10px;
+  }
+  .chat-input input {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--ink);
+    font-size: 13px;
+    outline: none;
+  }
+  .chat-input input:focus { border-color: var(--brand); }
+  .chat-send {
+    width: 36px; height: 36px;
+    background: var(--brand);
+    color: white;
+    border-radius: 8px;
+    display: grid; place-items: center;
+  }
+
+  /* Calls */
+  .calls-table {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .call-row {
+    display: grid;
+    grid-template-columns: 36px 1.4fr 1fr 70px 90px 70px;
+    gap: 12px;
+    padding: 11px 16px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .call-row:last-child { border: none; }
+  .call-dir {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    font-size: 11px;
+  }
+  .call-dir.in { background: var(--success-soft); color: var(--success); }
+  .call-dir.out { background: var(--brand-soft); color: var(--brand-2); }
+  .call-status {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .call-status.done { background: var(--success-soft); color: var(--success); }
+  .call-status.missed { background: var(--danger-soft); color: var(--danger); }
+
+  /* WhatsApp */
+  .wa-templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .wa-tpl {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .wa-tpl-name { font-size: 12px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .wa-tpl-txt { font-size: 11px; color: var(--ink-3); line-height: 1.4; }
+
+  /* Integrations */
+  .int-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .int-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .int-card:hover { border-color: var(--line-2); }
+  .int-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .int-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .int-status {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .int-status.on { background: var(--success-soft); color: var(--success); }
+  .int-status.warn { background: var(--warn-soft); color: var(--warn); }
+  .int-status.off { background: var(--surface-2); color: var(--ink-3); }
+  .int-desc { font-size: 11.5px; color: var(--ink-3); line-height: 1.5; margin-bottom: 8px; }
+  .int-stat { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--ink-4); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.25s;
+    z-index: 100;
+    max-width: 320px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast small { display: block; opacity: 0.65; font-family: 'Geist Mono', monospace; font-size: 10px; margin-top: 2px; }
+
+  /* ============================================================
+     NEW FEATURES — champion leads, goals, digest, patterns, etc
+     ============================================================ */
+
+  /* A2 · Champion Leads */
+  .champion-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--brand-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .champion-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -15%;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 60%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .champ-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; position: relative; z-index: 2; }
+  .champ-title { font-size: 15px; font-weight: 500; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .champ-title svg { color: var(--warn); }
+  .champ-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; position: relative; z-index: 2; }
+  .champ-row {
+    display: grid;
+    grid-template-columns: 30px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .champ-row:hover { border-color: var(--brand-border); transform: translateY(-1px); }
+  .champ-score {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: white;
+  }
+  .champ-score.s9 { background: var(--success); }
+  .champ-score.s8 { background: var(--brand); }
+  .champ-score.s7 { background: var(--accent); }
+  .champ-info { min-width: 0; }
+  .champ-name { font-size: 12.5px; font-weight: 500; color: var(--ink); margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .champ-sig { font-size: 10.5px; color: var(--ink-3); font-family: 'Geist Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .champ-btn { background: var(--brand); color: white; border-radius: 5px; font-size: 10.5px; padding: 4px 9px; font-weight: 500; white-space: nowrap; }
+
+  /* C4 · Goals progress */
+  .goals-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .goal-row { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .goal-row:last-child { border: none; padding-bottom: 0; }
+  .goal-row:first-child { padding-top: 0; }
+  .goal-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .goal-name { font-size: 12.5px; color: var(--ink); font-weight: 500; }
+  .goal-pct { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  .goal-pct.on { color: var(--success); }
+  .goal-pct.off { color: var(--warn); }
+  .goal-bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; position: relative; }
+  .goal-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease-out; }
+  .goal-fill.on { background: var(--success); }
+  .goal-fill.off { background: var(--warn); }
+  .goal-fill.under { background: var(--danger); }
+  .goal-sub { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--ink-4); margin-top: 4px; display: flex; justify-content: space-between; }
+
+  /* C1 · Daily Digest */
+  .digest-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .digest-card.evening {
+    background: linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(167,139,250,0.05) 100%);
+    border-color: var(--brand-border);
+  }
+  .digest-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 14px; }
+  .digest-stat { text-align: center; padding: 10px 6px; background: var(--surface-2); border-radius: 7px; border: 1px solid var(--line); }
+  .digest-num { font-size: 22px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .digest-lbl { font-family: 'Geist Mono', monospace; font-size: 9px; color: var(--ink-4); margin-top: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .digest-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .digest-section-t { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .digest-bullet { font-size: 12px; color: var(--ink-2); padding: 3px 0; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+  .digest-bullet .bul { color: var(--success); flex-shrink: 0; margin-top: 3px; }
+  .digest-bullet.down .bul { color: var(--danger); }
+  .digest-bullet.neutral .bul { color: var(--brand-2); }
+
+  /* C2 · Activity Streak */
+  .streak-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .streak-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .streak-big {
+    display: flex; align-items: baseline; gap: 6px;
+    margin-bottom: 2px;
+  }
+  .streak-num { font-size: 28px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .streak-lbl { font-size: 12px; color: var(--ink-3); }
+  .streak-grid {
+    display: grid;
+    grid-template-columns: repeat(30, 1fr);
+    gap: 2.5px;
+    margin: 12px 0 8px;
+  }
+  .streak-cell {
+    aspect-ratio: 1;
+    max-height: 14px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    transition: transform 0.12s;
+  }
+  .streak-cell:hover { transform: scale(1.3); }
+  .streak-cell.l1 { background: rgba(96, 165, 250, 0.25); }
+  .streak-cell.l2 { background: rgba(96, 165, 250, 0.5); }
+  .streak-cell.l3 { background: rgba(96, 165, 250, 0.75); }
+  .streak-cell.l4 { background: var(--brand-2); }
+  .streak-cell.skip { background: rgba(239, 68, 68, 0.2); }
+  .streak-legend { display: flex; justify-content: space-between; font-family: 'Geist Mono', monospace; font-size: 9.5px; color: var(--ink-4); }
+
+  /* A1 · Winning Patterns */
+  .pattern-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--success);
+    border-left-width: 3px;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .pattern-rank {
+    position: absolute; top: -8px; left: 14px;
+    background: var(--success);
+    color: white;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .pattern-t { font-size: 13.5px; font-weight: 500; color: var(--ink); margin-top: 4px; margin-bottom: 6px; line-height: 1.4; }
+  .pattern-metric {
+    display: flex; gap: 14px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .pattern-metric span { display: flex; flex-direction: column; gap: 1px; }
+  .pattern-metric b { color: var(--success); font-weight: 500; font-size: 13px; }
+
+  /* A4 · Best Time Heatmap */
+  .bt-heatmap {
+    display: grid;
+    grid-template-columns: 36px repeat(24, 1fr);
+    gap: 2px;
+    padding: 10px 0;
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+  }
+  .bt-lbl { color: var(--ink-4); display: grid; place-items: center; text-align: right; padding-right: 4px; }
+  .bt-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+  .bt-cell:hover { transform: scale(1.4); outline: 1px solid var(--brand-2); outline-offset: 1px; z-index: 5; position: relative; }
+  .bt-cell.peak { background: var(--success); }
+  .bt-hours {
+    display: grid;
+    grid-template-columns: 36px repeat(24, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-4);
+  }
+  .bt-hours span { text-align: center; }
+
+  /* B4 · Subject Line Graveyard */
+  .subj-row {
+    display: grid;
+    grid-template-columns: 24px 1fr 90px 100px 60px;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    font-size: 12px;
+  }
+  .subj-row:last-child { border: none; }
+  .subj-row.top { background: rgba(34,197,94,0.03); }
+  .subj-row.bot { background: rgba(239,68,68,0.03); }
+  .subj-rank-n {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-4);
+    text-align: center;
+  }
+  .subj-text {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .subj-sent { font-family: 'Geist Mono', monospace; font-size: 10.5px; color: var(--ink-3); text-align: right; }
+  .subj-rate { font-family: 'Geist Mono', monospace; font-weight: 500; text-align: right; }
+  .subj-rate.hi { color: var(--success); }
+  .subj-rate.lo { color: var(--danger); }
+  .subj-action {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    padding: 3px 7px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--ink-3);
+    text-align: center;
+  }
+  .subj-action.reuse { background: var(--success-soft); color: var(--success); }
+  .subj-action.kill { background: var(--danger-soft); color: var(--danger); }
+
+  /* B3 · Lead Leakage */
+  .leak-alert {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 3px solid;
+  }
+  .leak-alert.stuck { background: rgba(239,68,68,0.05); border-color: var(--danger); }
+  .leak-alert.silent { background: rgba(245,158,11,0.05); border-color: var(--warn); }
+  .leak-alert.neglected { background: rgba(239,68,68,0.05); border-color: var(--danger); }
+  .leak-icn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    font-family: 'Geist Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .leak-icn.stuck { background: var(--danger-soft); color: var(--danger); }
+  .leak-icn.silent { background: var(--warn-soft); color: var(--warn); }
+  .leak-icn.neglected { background: var(--danger-soft); color: var(--danger); }
+  .leak-t { font-size: 12.5px; color: var(--ink); font-weight: 500; margin-bottom: 2px; }
+  .leak-desc { font-size: 11px; color: var(--ink-3); font-family: 'Geist Mono', monospace; }
+
+  /* D5 · Objection Handler library */
+  .obj-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .obj-card {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 12px 14px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .obj-card:hover { border-color: var(--brand-border); transform: translateY(-1px); }
+  .obj-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .obj-type {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: var(--warn-soft);
+    color: var(--warn);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .obj-stat {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-4);
+  }
+  .obj-quote {
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-style: italic;
+    line-height: 1.45;
+  }
+  .obj-reply {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    line-height: 1.55;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+  .obj-reply b { color: var(--success); font-weight: 500; }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 1200px) {
+    .pipe-cols { grid-template-columns: repeat(7, 180px); }
+  }
+  @media (max-width: 980px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed; top: 0; left: -240px;
+      z-index: 50;
+      width: 240px;
+      transition: left 0.25s;
+    }
+    .sidebar.mobile-open { left: 0; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .inbox-grid { grid-template-columns: 1fr; height: auto; }
+    .rev-hero { grid-template-columns: 1fr; }
+    .rev-split { grid-template-columns: 1fr; }
+    .assistant-wrap { grid-template-columns: 1fr; height: auto; }
+    .int-grid { grid-template-columns: 1fr; }
+    .placeholder-grid { grid-template-columns: 1fr; }
+    .champ-list { grid-template-columns: 1fr; }
+    .digest-stats { grid-template-columns: repeat(2, 1fr); }
+    .streak-grid { grid-template-columns: repeat(15, 1fr); }
+    .bt-heatmap, .bt-hours { grid-template-columns: 30px repeat(24, 1fr); font-size: 7.5px; }
+    .subj-row { grid-template-columns: 1fr; gap: 4px; }
+    .leak-alert { grid-template-columns: 30px 1fr; }
+    .leak-alert .btn { grid-column: 1 / -1; justify-self: start; margin-top: 4px; }
+    .dt-head, .dt-row { grid-template-columns: 1fr; gap: 4px; padding: 10px 12px; }
+    .dt-head { display: none; }
+    .pipe-summary { grid-template-columns: 1fr 1fr; }
+    .queue-row { grid-template-columns: 60px 1fr; }
+    .queue-row .btn { grid-column: 1 / -1; justify-self: start; margin-top: 4px; }
+    h1 { font-size: 20px; }
+    .content { padding: 18px; }
+  }
+
+  /* Mobile nav toggle */
+  .mobile-nav-btn {
+    display: none;
+    width: 32px; height: 32px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink);
+  }
+  @media (max-width: 980px) {
+    .mobile-nav-btn { display: grid; place-items: center; }
+    .search { min-width: 0; flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============================================================
+       SIDEBAR
+       ============================================================ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="brand-name">Alainza CRM</div>
+        <div class="brand-sub">v3.0</div>
+      </div>
+    </div>
+
+    <div class="nav-group">Overview</div>
+    <button class="nav-item active" data-view="today">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg>
+      Today
+      <span class="ct hot">5</span>
+    </button>
+    <button class="nav-item" data-view="assistant">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3.5L13 7l-3.5 1.5L8 12l-1.5-3.5L3 7l3.5-1.5z"/></svg>
+      AI Assistant
+    </button>
+
+    <div class="nav-group">Sales</div>
+    <button class="nav-item" data-view="pipeline">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="2.5" height="10" rx="0.5"/><rect x="5.5" y="3" width="2.5" height="8" rx="0.5"/><rect x="9" y="3" width="2.5" height="6" rx="0.5"/><rect x="12.5" y="3" width="2.5" height="4" rx="0.5"/></svg>
+      Pipeline
+      <span class="ct">64</span>
+    </button>
+    <button class="nav-item" data-view="leads">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="2.5"/><circle cx="11" cy="5" r="2"/><path d="M2 13c0-2 2-3.5 4-3.5s4 1.5 4 3.5M9 11.5c1-1 2-1.5 3-1.5s2 0.5 2.5 1.5"/></svg>
+      Leads
+    </button>
+    <button class="nav-item" data-view="groups">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="9" y="3" width="5" height="5" rx="1"/><rect x="2" y="10" width="5" height="4" rx="1"/><rect x="9" y="10" width="5" height="4" rx="1"/></svg>
+      Groups
+    </button>
+
+    <div class="nav-group">Channels</div>
+    <button class="nav-item" data-view="inbox">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5l5.3 4a1 1 0 0 0 1.4 0L14 5"/><rect x="2" y="3" width="12" height="10" rx="1"/></svg>
+      Unified Inbox
+      <span class="ct">47</span>
+    </button>
+    <button class="nav-item" data-view="email">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M3 5l5 4 5-4"/></svg>
+      Email
+    </button>
+    <button class="nav-item" data-view="calls">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3c0 5.5 4.5 10 10 10v-2.5l-2.5-1-1.5 2-3-3 2-1.5-1-2.5H4.5"/></svg>
+      Calls
+    </button>
+    <button class="nav-item" data-view="whatsapp">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14l1-3.5A6 6 0 1 1 5.5 13L2 14z"/></svg>
+      WhatsApp
+    </button>
+
+    <div class="nav-group">Analytics</div>
+    <button class="nav-item" data-view="performance">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6M6 14V2M10 14V8M14 14v-4"/></svg>
+      Performance
+    </button>
+    <button class="nav-item" data-view="revenue">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 4h4.5a2 2 0 1 1 0 4H6a2 2 0 1 0 0 4h4.5"/></svg>
+      Revenue
+    </button>
+
+    <div class="nav-group">Settings</div>
+    <button class="nav-item" data-view="calendar">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M5 2v3M11 2v3M2 7h12"/></svg>
+      Calendar
+    </button>
+    <button class="nav-item" data-view="integrations">
+      <svg class="icn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><path d="M5.5 4h5M4 5.5v5M12 5.5v5M5.5 12h5"/></svg>
+      Integrations
+    </button>
+
+    <div class="side-foot">
+      <div class="avatar">K</div>
+      <div>
+        <div class="user-name">Komal</div>
+        <div class="user-role">Alainza Bizz</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       MAIN
+       ============================================================ -->
+  <main class="main">
+
+    <div class="topbar">
+      <div style="display: flex; gap: 10px; align-items: center; flex: 1;">
+        <button class="mobile-nav-btn" onclick="toggleSidebar()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <div class="search">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+          <span>Search leads, companies, threads…</span>
+          <kbd>⌘K</kbd>
+        </div>
+      </div>
+      <div class="top-right">
+        <div class="sync-pill">
+          <span class="live-dot"></span>
+          Synced 2m ago
+        </div>
+        <button class="icon-btn" id="themeToggle" title="Toggle theme">
+          <svg id="themeIcon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="8" r="3"/>
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/>
+          </svg>
+        </button>
+        <button class="icon-btn" title="Notifications">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 0-4 4v3l-1 2h10l-1-2V6a4 4 0 0 0-4-4zM6.5 13a1.5 1.5 0 0 0 3 0"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ============================================================
+           VIEW: TODAY
+           ============================================================ -->
+      <section class="view active" id="view-today">
+        <header class="page-head">
+          <div>
+            <h1>Good morning Komal — <em>5 things</em> need you today</h1>
+            <div class="page-sub">Sunday, 19 April · Week 16 · ~35 min of focused work ahead</div>
+          </div>
+          <div class="page-chips">
+            <button class="chip">Today</button>
+            <button class="chip">Last 2 Days</button>
+            <button class="chip">This Week</button>
+            <button class="chip active">This Month</button>
+          </div>
+        </header>
+
+        <div class="queue-card">
+          <div class="queue-head">
+            <span class="card-t">Priority queue · in order</span>
+            <span class="card-t">↓ urgency score</span>
+          </div>
+          <div class="queue-row" onclick="toast('Opening reply composer for Marisa','Pricing for 3 locations · AI-drafted')">
+            <span class="qbadge reply">Reply</span>
+            <div>
+              <div class="q-name">Marisa Munoz · Berman Skin Institute</div>
+              <div class="q-sub">"Interested — can you send pricing for 3 locations?"</div>
+            </div>
+            <button class="btn primary">Draft reply →</button>
+          </div>
+          <div class="queue-row" onclick="toast('Generating meeting prep brief','Kowalski clinic · Warsaw · thread summary')">
+            <span class="qbadge mtg">Meeting</span>
+            <div>
+              <div class="q-name">Dr. Petra Kowalski · today 3:30 PM</div>
+              <div class="q-sub">Warsaw derm clinic · discovery call · Google Meet</div>
+            </div>
+            <button class="btn">Prep brief</button>
+          </div>
+          <div class="queue-row" onclick="toast('Opening approval queue','3 drafts · Poland dental sequence')">
+            <span class="qbadge approve">Approve</span>
+            <div>
+              <div class="q-name">3 AI-drafted emails waiting</div>
+              <div class="q-sub">Poland dental sequence · step 2 of 5 · batch approve</div>
+            </div>
+            <button class="btn">Review batch</button>
+          </div>
+          <div class="queue-row" onclick="toast('Drafting WhatsApp nudge','Advanced MedAesthetic · template #4')">
+            <span class="qbadge cold">Cold</span>
+            <div>
+              <div class="q-name">Advanced MedAesthetic · 7 days silent</div>
+              <div class="q-sub">Opened last email 3× · WhatsApp nudge suggested</div>
+            </div>
+            <button class="btn">Nudge</button>
+          </div>
+          <div class="queue-row" onclick="toast('Drafting contract email','Gameday Men\u0027s Health · €2,400 setup + €800 MRR')">
+            <span class="qbadge close">Close</span>
+            <div>
+              <div class="q-name">Gameday Men's Health · ready to sign</div>
+              <div class="q-sub">Proposal sent 2 days ago · opened 6× · send contract</div>
+            </div>
+            <button class="btn primary">Send contract →</button>
+          </div>
+        </div>
+
+        <div class="champion-card">
+          <div class="champ-head">
+            <div class="champ-title">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2 5 5 .5-3.5 3.5 1 5L8 12l-4.5 3 1-5L1 6.5 6 6z"/></svg>
+              Champion Leads · close these this week
+            </div>
+            <span class="card-t">top 6 by intent score · live</span>
+          </div>
+          <div class="champ-list">
+            <div class="champ-row" onclick="toast('Opening lead detail','Gameday Men\u0027s Health')">
+              <div class="champ-score s9">94</div>
+              <div class="champ-info">
+                <div class="champ-name">Gameday Men's Health</div>
+                <div class="champ-sig">Opened 6× · proposal viewed · sentiment +0.82</div>
+              </div>
+              <button class="champ-btn">Close →</button>
+            </div>
+            <div class="champ-row" onclick="toast('Opening lead detail','Marisa @ Berman Skin')">
+              <div class="champ-score s9">91</div>
+              <div class="champ-info">
+                <div class="champ-name">Marisa Munoz · Berman Skin</div>
+                <div class="champ-sig">Asked for pricing · 3 locations · replied +0.74</div>
+              </div>
+              <button class="champ-btn">Reply →</button>
+            </div>
+            <div class="champ-row" onclick="toast('Opening lead detail','Dr. Kowalski')">
+              <div class="champ-score s8">87</div>
+              <div class="champ-info">
+                <div class="champ-name">Dr. Petra Kowalski · Warsaw</div>
+                <div class="champ-sig">Meeting today 3:30pm · confirmed · WA +0.71</div>
+              </div>
+              <button class="champ-btn">Prep →</button>
+            </div>
+            <div class="champ-row" onclick="toast('Opening lead detail','SEV Laser')">
+              <div class="champ-score s8">82</div>
+              <div class="champ-info">
+                <div class="champ-name">SEV Laser · Los Angeles</div>
+                <div class="champ-sig">Follow-up scheduled · clicked pricing 4×</div>
+              </div>
+              <button class="champ-btn">View</button>
+            </div>
+            <div class="champ-row" onclick="toast('Opening lead detail','Hans Mueller')">
+              <div class="champ-score s7">76</div>
+              <div class="champ-info">
+                <div class="champ-name">Hans Mueller · Dermatologie</div>
+                <div class="champ-sig">Replied in German · asking for demo link</div>
+              </div>
+              <button class="champ-btn">View</button>
+            </div>
+            <div class="champ-row" onclick="toast('Opening lead detail','DermaClinik Berlin')">
+              <div class="champ-score s7">72</div>
+              <div class="champ-info">
+                <div class="champ-name">DermaClinik Berlin</div>
+                <div class="champ-sig">WA: "can we schedule contract signing?"</div>
+              </div>
+              <button class="champ-btn">View</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="three-col">
+          <div class="goals-card">
+            <div class="card-head">
+              <span class="card-t-lg">April goals</span>
+              <span class="card-t">11 days left</span>
+            </div>
+            <div class="goal-row">
+              <div class="goal-top">
+                <span class="goal-name">MRR target</span>
+                <span class="goal-pct on">67%</span>
+              </div>
+              <div class="goal-bar"><div class="goal-fill on" style="width: 67%;"></div></div>
+              <div class="goal-sub"><span>€3,200 of €4,800</span><span>need 2 more clients</span></div>
+            </div>
+            <div class="goal-row">
+              <div class="goal-top">
+                <span class="goal-name">Meetings booked</span>
+                <span class="goal-pct on">60%</span>
+              </div>
+              <div class="goal-bar"><div class="goal-fill on" style="width: 60%;"></div></div>
+              <div class="goal-sub"><span>18 of 30</span><span>on pace</span></div>
+            </div>
+            <div class="goal-row">
+              <div class="goal-top">
+                <span class="goal-name">Replies received</span>
+                <span class="goal-pct off">48%</span>
+              </div>
+              <div class="goal-bar"><div class="goal-fill off" style="width: 48%;"></div></div>
+              <div class="goal-sub"><span>184 of 380</span><span>slightly behind</span></div>
+            </div>
+            <div class="goal-row">
+              <div class="goal-top">
+                <span class="goal-name">Outreach volume</span>
+                <span class="goal-pct on">76%</span>
+              </div>
+              <div class="goal-bar"><div class="goal-fill on" style="width: 76%;"></div></div>
+              <div class="goal-sub"><span>3,847 of 5,000</span><span>ahead of pace</span></div>
+            </div>
+          </div>
+
+          <div class="streak-card">
+            <div class="streak-head">
+              <div>
+                <div class="streak-big">
+                  <span class="streak-num">23</span>
+                  <span class="streak-lbl">day streak 🔥</span>
+                </div>
+                <div class="card-t" style="margin-top: 4px;">longest this quarter</div>
+              </div>
+              <button class="btn sm">History</button>
+            </div>
+            <div class="streak-grid" id="streakGrid"></div>
+            <div class="streak-legend">
+              <span>30 days ago</span>
+              <span style="display: flex; gap: 10px; align-items: center;">
+                <span style="display: flex; align-items: center; gap: 3px;"><span style="width:8px;height:8px;background:var(--surface-2);border-radius:2px;"></span>none</span>
+                <span style="display: flex; align-items: center; gap: 3px;"><span style="width:8px;height:8px;background:var(--brand-2);border-radius:2px;"></span>active</span>
+              </span>
+              <span>today</span>
+            </div>
+          </div>
+
+          <div class="digest-card evening">
+            <div class="card-head">
+              <span class="card-t-lg">Yesterday's recap</span>
+              <span class="card-t" style="color: var(--brand-2);">auto at 6pm</span>
+            </div>
+            <div class="digest-stats">
+              <div class="digest-stat">
+                <div class="digest-num">42</div>
+                <div class="digest-lbl">Emails sent</div>
+              </div>
+              <div class="digest-stat">
+                <div class="digest-num" style="color: var(--success);">7</div>
+                <div class="digest-lbl">Replies</div>
+              </div>
+              <div class="digest-stat">
+                <div class="digest-num">2</div>
+                <div class="digest-lbl">Meetings</div>
+              </div>
+              <div class="digest-stat">
+                <div class="digest-num" style="color: var(--brand-2);">1</div>
+                <div class="digest-lbl">Closed won</div>
+              </div>
+            </div>
+            <div class="digest-section">
+              <div class="digest-section-t">Highlights</div>
+              <div class="digest-bullet"><span class="bul">▲</span>Gameday Men's Health signed pilot agreement (€2,400 setup + €800 MRR)</div>
+              <div class="digest-bullet neutral"><span class="bul">●</span>Marisa Munoz asked for 3-location pricing — warmest inbound of week</div>
+              <div class="digest-bullet down"><span class="bul">▼</span>US derm campaign hit 1.3% reply rate — pause recommended</div>
+            </div>
+          </div>
+        </div>
+
+
+          <div class="kpi">
+            <div class="kpi-l">Meetings · 7d</div>
+            <div class="kpi-v">4</div>
+            <div class="kpi-d up">↑ 1 vs last week</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-l">Upcoming</div>
+            <div class="kpi-v">6</div>
+            <div class="kpi-d">next: today 3:30 PM</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-l">Reply rate · 30d</div>
+            <div class="kpi-v">4.8<small>%</small></div>
+            <div class="kpi-d up">↑ 0.6pt</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-t">Touchpoints · last 14 days</div>
+                <div style="font-size: 18px; font-weight: 500; color: var(--ink); margin-top: 4px;">342 <span style="color: var(--ink-3); font-size: 13px;">sent across channels</span></div>
+              </div>
+              <span class="card-t">E · WA · LI · Call</span>
+            </div>
+            <div class="heatmap" id="heatmap"></div>
+            <div class="hlbl">
+              <span>6 Apr</span><span>Today</span>
+            </div>
+            <div class="ttiles">
+              <div class="ttile"><div class="tnum">23</div><div class="tlbl">Yesterday</div></div>
+              <div class="ttile"><div class="tnum">18</div><div class="tlbl">Day before</div></div>
+              <div class="ttile"><div class="tnum">142</div><div class="tlbl">Last 7 days</div></div>
+              <div class="ttile"><div class="tnum">31</div><div class="tlbl">10 days ago</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span class="card-t">This week's schedule</span>
+              <button class="btn sm" onclick="switchView('calendar')">All →</button>
+            </div>
+            <div class="sch-row"><span class="sch-day" style="color: var(--danger)">Today</span><span class="sch-time">15:30</span><span class="sch-name">Dr. Petra Kowalski · discovery</span><span class="sch-chan">Meet</span></div>
+            <div class="sch-row"><span class="sch-day">Mon</span><span class="sch-time">10:00</span><span class="sch-name">Milan Laser · pricing walkthrough</span><span class="sch-chan">Zoom</span></div>
+            <div class="sch-row"><span class="sch-day">Tue</span><span class="sch-time">14:00</span><span class="sch-name">SEV Laser · follow-up</span><span class="sch-chan call">Call</span></div>
+            <div class="sch-row"><span class="sch-day">Wed</span><span class="sch-time">16:30</span><span class="sch-name">Gameday · onboarding 🎉</span><span class="sch-chan">Meet</span></div>
+            <div class="sch-row"><span class="sch-day">Fri</span><span class="sch-time">11:00</span><span class="sch-name">Advanced MedAesthetic</span><span class="sch-chan">Meet</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: AI ASSISTANT
+           ============================================================ -->
+      <section class="view" id="view-assistant">
+        <header class="page-head">
+          <div>
+            <h1>AI Assistant — <em>ask anything</em> about your CRM</h1>
+            <div class="page-sub">Query leads, companies, pipeline stats, and manage groups with natural language.</div>
+          </div>
+        </header>
+
+        <div class="assistant-wrap">
+          <div class="conv-side">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span class="card-t">Conversations</span>
+              <button class="btn sm">+ New</button>
+            </div>
+            <div class="conv-item active">New chat</div>
+            <div class="conv-item">Germany derm research</div>
+            <div class="conv-item">Reply rate analysis</div>
+            <div class="conv-item">Poland dental lookup</div>
+            <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--ink-4);">4 conversations saved</div>
+          </div>
+          <div class="chat-panel">
+            <div class="chat-body">
+              <div class="chat-sparkle">
+                <svg width="26" height="26" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.5 5L14 6.5 9.5 8 8 13 6.5 8 2 6.5 6.5 5z"/></svg>
+              </div>
+              <div class="chat-welcome">Ask me anything about your CRM</div>
+              <div class="chat-sub">I can query leads, companies, pipeline stats, email performance, and manage groups — all in plain English.</div>
+              <div class="chat-suggestions">
+                <button class="chat-sugg">How many leads do I have?</button>
+                <button class="chat-sugg">Show me leads from Germany</button>
+                <button class="chat-sugg">Show me all dentists in Poland</button>
+                <button class="chat-sugg">Create a group called 'Dentists Poland'</button>
+                <button class="chat-sugg">List my groups</button>
+                <button class="chat-sugg">What is the pipeline stage breakdown?</button>
+                <button class="chat-sugg">Which campaign has the highest reply rate?</button>
+                <button class="chat-sugg">Leads who haven't replied in 7 days</button>
+              </div>
+            </div>
+            <div class="chat-input">
+              <input type="text" placeholder="Ask a question or give a command… (Enter to send, Shift+Enter for new line)" />
+              <button class="chat-send">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l12-6-4 14-2.5-5.5L2 8z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: PIPELINE — 7 stages
+           ============================================================ -->
+      <section class="view" id="view-pipeline">
+        <header class="page-head">
+          <div>
+            <h1>Pipeline — <em>seven stages</em> of active deals</h1>
+            <div class="page-sub">6,043 cold leads live in the reactivation pool. Heat dots flag what needs attention.</div>
+          </div>
+        </header>
+
+        <div class="pipe-toolbar">
+          <input class="pipe-search" placeholder="Search leads…" />
+          <button class="btn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-right: 5px; vertical-align: -2px;"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+            Filter
+          </button>
+          <button class="btn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-right: 5px; vertical-align: -2px;"><circle cx="8" cy="8" r="6"/><path d="M8 4v8M4 8h8"/></svg>
+            Properties
+          </button>
+          <button class="btn primary" style="margin-left: auto;">+ Add Lead</button>
+        </div>
+
+        <div class="pipe-scroll">
+          <div class="pipe-cols">
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--ink-3);"></span>New</span>
+                <span class="stage-count">6,043</span>
+              </div>
+              <div class="lcard">
+                <div class="lcard-name">Kiera Woods</div>
+                <div class="lcard-meta">Human Resources Business Partner</div>
+                <div class="lcard-meta">Advanced MedAesthetic</div>
+                <span class="lcard-tag">New</span>
+              </div>
+              <div class="lcard">
+                <div class="lcard-name">S M</div>
+                <div class="lcard-meta">Investment Partner</div>
+                <div class="lcard-meta">BERMAN SKIN INSTITUTE</div>
+                <span class="lcard-tag">New</span>
+              </div>
+              <div class="lcard">
+                <div class="lcard-name">Cheryl Zelenak</div>
+                <div class="lcard-meta">VP Marketing</div>
+                <div class="lcard-meta">Advanced Dermatology</div>
+                <span class="lcard-tag">New</span>
+              </div>
+              <div class="empty-lcard">+ 6,040 more</div>
+            </div>
+
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--brand-2);"></span>Researched</span>
+                <span class="stage-count">2</span>
+              </div>
+              <div class="lcard">
+                <div class="lcard-name">Marisa Munoz</div>
+                <div class="lcard-meta">Talent Acquisition Partner</div>
+                <div class="lcard-meta">Milan Laser Hair Removal</div>
+                <span class="lcard-tag" style="background: var(--brand-soft); color: var(--brand-2);">Researched</span>
+              </div>
+              <div class="lcard">
+                <div class="lcard-name">Medrose Medical Center</div>
+                <div class="lcard-meta">Added 25 Mar 2026</div>
+                <span class="lcard-tag" style="background: var(--brand-soft); color: var(--brand-2);">Researched</span>
+              </div>
+            </div>
+
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--accent);"></span>Email Sent</span>
+                <span class="stage-count">1</span>
+              </div>
+              <div class="lcard">
+                <div class="heat-dot heat-red"></div>
+                <div class="lcard-name">Misty Riedel</div>
+                <div class="lcard-meta">VP of Sales</div>
+                <div class="lcard-meta">Milan Laser Hair Removal</div>
+                <span class="lcard-tag" style="background: var(--accent-soft); color: var(--accent);">Email Sent</span>
+              </div>
+            </div>
+
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--warn);"></span>Follow-up 1</span>
+                <span class="stage-count">1</span>
+              </div>
+              <div class="lcard">
+                <div class="heat-dot heat-amber"></div>
+                <div class="lcard-name">Dermaniac SLP</div>
+                <div class="lcard-meta">Added 29 Mar 2026</div>
+                <span class="lcard-tag" style="background: var(--warn-soft); color: var(--warn);">Follow-up 1</span>
+              </div>
+            </div>
+
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--warn);"></span>Follow-up 2</span>
+                <span class="stage-count">0</span>
+              </div>
+              <div class="empty-lcard">No leads</div>
+            </div>
+
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--success);"></span>Responded</span>
+                <span class="stage-count">0</span>
+              </div>
+              <div class="empty-lcard">No leads</div>
+            </div>
+
+            <div class="stage-col">
+              <div class="stage-head">
+                <span class="stage-title"><span class="stage-dot" style="background: var(--success);"></span>Closed</span>
+                <span class="stage-count">0</span>
+              </div>
+              <div class="empty-lcard">No leads</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pipe-summary">
+          <div>
+            <div class="ps-l">Weighted pipeline</div>
+            <div class="ps-v">€84,200</div>
+          </div>
+          <div>
+            <div class="ps-l">Avg deal size</div>
+            <div class="ps-v">€1,315</div>
+          </div>
+          <div>
+            <div class="ps-l">Blended close rate</div>
+            <div class="ps-v">11<small>%</small></div>
+          </div>
+          <div>
+            <div class="ps-l">Cold pool</div>
+            <div class="ps-v">6,043 <small>leads</small></div>
+          </div>
+          <button class="btn primary" onclick="toast('Cold pool reactivation','Select segment: Poland dental · Germany derm · Spain medspa')">Reactivate segment →</button>
+        </div>
+
+        <div class="card" style="margin-top: 14px;">
+          <div class="card-head">
+            <div class="card-t-lg">🚨 Lead Leakage — deals dying from neglect, not rejection</div>
+            <span class="card-t">auto-flagged · act fast</span>
+          </div>
+          <div class="leak-alert stuck">
+            <div class="leak-icn stuck">18</div>
+            <div>
+              <div class="leak-t">18 leads stuck in Follow-up 2 for 14+ days</div>
+              <div class="leak-desc">€24k weighted value · no touch · 7 were opened 3+ times</div>
+            </div>
+            <button class="btn sm primary" onclick="toast('Opening bulk nudge','18 leads · choose channel: email or WA')">Nudge all →</button>
+          </div>
+          <div class="leak-alert silent">
+            <div class="leak-icn silent">7</div>
+            <div>
+              <div class="leak-t">7 meetings ended · no follow-up email sent</div>
+              <div class="leak-desc">Post-call template overdue · showing up to sentiment scores</div>
+            </div>
+            <button class="btn sm primary" onclick="toast('Drafting follow-ups','7 post-meeting emails · AI will personalize')">Draft all →</button>
+          </div>
+          <div class="leak-alert neglected">
+            <div class="leak-icn neglected">23</div>
+            <div>
+              <div class="leak-t">23 positive replies · not responded to in 24h</div>
+              <div class="leak-desc">Warmest leads going cold · includes 4 pricing asks</div>
+            </div>
+            <button class="btn sm primary" onclick="toast('Opening reply queue','Sorted by sentiment · 23 drafts ready')">Reply now →</button>
+          </div>
+          <div class="leak-alert silent">
+            <div class="leak-icn silent">12</div>
+            <div>
+              <div class="leak-t">12 leads "Ghosted" — replied once, then silence 7+ days</div>
+              <div class="leak-desc">Already know you · re-engagement template ready</div>
+            </div>
+            <button class="btn sm" onclick="toast('Ghosted lead list','12 leads · WA or LinkedIn nudge recommended')">Re-engage</button>
+          </div>
+          <div class="leak-alert stuck">
+            <div class="leak-icn stuck">5</div>
+            <div>
+              <div class="leak-t">5 proposals sent &gt; 7 days ago · no follow-up</div>
+              <div class="leak-desc">€9,200 total value · contracts waiting to be chased</div>
+            </div>
+            <button class="btn sm primary" onclick="toast('Opening proposal chase queue','5 leads · contract-nudge template')">Chase →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: LEADS — Company Data / Lead Data / Analytics
+           ============================================================ -->
+      <section class="view" id="view-leads">
+        <header class="page-head">
+          <div>
+            <h1>Leads — <em>company and contact</em> records</h1>
+            <div class="page-sub">Manage companies, contacts, and data quality across all sources.</div>
+          </div>
+        </header>
+
+        <div class="leads-tabs">
+          <button class="leads-tab active" data-leads-tab="company">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="10" height="9"/><path d="M5 7h2M5 9h2M9 7h2M9 9h2"/></svg>
+            Company Data
+          </button>
+          <button class="leads-tab" data-leads-tab="lead">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="3" rx="1"/><rect x="2" y="7" width="12" height="3" rx="1"/><rect x="2" y="11" width="12" height="2" rx="0.5"/></svg>
+            Lead Data
+          </button>
+          <button class="leads-tab" data-leads-tab="analytics">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6M6 14V2M10 14V8M14 14v-4"/></svg>
+            Analytics
+          </button>
+        </div>
+
+        <!-- Company Data sub-tab -->
+        <div id="leads-company" class="leads-subtab">
+          <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+            <input class="pipe-search" placeholder="Search companies…" />
+            <button class="btn">Filter</button>
+            <button class="btn primary">+ Import CSV</button>
+          </div>
+          <div class="data-table">
+            <div class="dt-head">
+              <span>Company</span>
+              <span>Industry</span>
+              <span>Size</span>
+              <span>Country</span>
+              <span>Locations</span>
+              <span>Leads</span>
+              <span>Stage</span>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">42 North Dental<small>42northdental.com</small></div>
+              <div>Hospitals & Healthcare</div>
+              <div>—</div>
+              <div>United States</div>
+              <div><span class="dt-pill">1 location</span></div>
+              <div><span class="dt-pill" style="background: var(--brand-soft); color: var(--brand-2);">1 lead</span></div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">4EVER YOUNG ANTI-AGING SOLUTIONS<small>4everyoungantiaging.com</small></div>
+              <div>Health Wellness & Fitness</div>
+              <div>—</div>
+              <div>United States</div>
+              <div><span class="dt-pill">9 locations</span></div>
+              <div><span class="dt-pill" style="background: var(--brand-soft); color: var(--brand-2);">12 leads</span></div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">7 Day Dental<small>7daydental.com</small></div>
+              <div>Hospitals & Healthcare</div>
+              <div>—</div>
+              <div>United States</div>
+              <div><span class="dt-pill">1 location</span></div>
+              <div><span class="dt-pill" style="background: var(--brand-soft); color: var(--brand-2);">1 lead</span></div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">A. Becker / Dr.Dr. C. Graur<small>dermatologie-braunschweig.de</small></div>
+              <div>—</div>
+              <div>—</div>
+              <div>Germany</div>
+              <div><span class="dt-pill">1 location</span></div>
+              <div>—</div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">AB Derma<small>abderma.es</small></div>
+              <div>—</div>
+              <div>—</div>
+              <div>Spain</div>
+              <div><span class="dt-pill">1 location</span></div>
+              <div>—</div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">Aberdeen dental care<small>aberdeendentalcare.co.uk</small></div>
+              <div>—</div>
+              <div>—</div>
+              <div>United Kingdom</div>
+              <div><span class="dt-pill">1 location</span></div>
+              <div>—</div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+            <div class="dt-row">
+              <div class="dt-company">Advanced Dermatology and Cosmetic Surgery<small>advancedderm.com</small></div>
+              <div>Dermatology</div>
+              <div>50–100</div>
+              <div>United States</div>
+              <div><span class="dt-pill">3 locations</span></div>
+              <div><span class="dt-pill" style="background: var(--brand-soft); color: var(--brand-2);">2 leads</span></div>
+              <div><span class="dt-stage">New</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lead Data sub-tab -->
+        <div id="leads-lead" class="leads-subtab" style="display: none;">
+          <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+            <input class="pipe-search" placeholder="Search leads…" />
+            <button class="btn">Filter</button>
+            <button class="btn primary">+ Add Lead</button>
+          </div>
+          <div class="data-table">
+            <div class="dt-head" style="grid-template-columns: 1.3fr 1fr 1fr 90px 100px 80px 80px;">
+              <span>Contact</span>
+              <span>Title</span>
+              <span>Company</span>
+              <span>Email</span>
+              <span>Phone</span>
+              <span>Country</span>
+              <span>Stage</span>
+            </div>
+            <div class="dt-row" style="grid-template-columns: 1.3fr 1fr 1fr 90px 100px 80px 80px;">
+              <div class="dt-company">Marisa Munoz<small>marisa.munoz@milanlaser.com</small></div>
+              <div>Talent Acquisition Partner</div>
+              <div>Milan Laser Hair Removal</div>
+              <div><span class="dt-pill">Valid</span></div>
+              <div>+1 402…</div>
+              <div>US</div>
+              <div><span class="dt-stage" style="background: var(--brand-soft); color: var(--brand-2);">Researched</span></div>
+            </div>
+            <div class="dt-row" style="grid-template-columns: 1.3fr 1fr 1fr 90px 100px 80px 80px;">
+              <div class="dt-company">Misty Riedel<small>mriedel@ulta.com</small></div>
+              <div>VP of Sales</div>
+              <div>Milan Laser Hair Removal</div>
+              <div><span class="dt-pill">Valid</span></div>
+              <div>—</div>
+              <div>US</div>
+              <div><span class="dt-stage" style="background: var(--accent-soft); color: var(--accent);">Email Sent</span></div>
+            </div>
+            <div class="dt-row" style="grid-template-columns: 1.3fr 1fr 1fr 90px 100px 80px 80px;">
+              <div class="dt-company">Dr. Petra Kowalski<small>p.kowalski@klinika.pl</small></div>
+              <div>Medical Director</div>
+              <div>Klinika Dermatologia</div>
+              <div><span class="dt-pill">Valid</span></div>
+              <div>+48 22…</div>
+              <div>PL</div>
+              <div><span class="dt-stage" style="background: var(--warn-soft); color: var(--warn);">Follow-up 1</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics sub-tab -->
+        <div id="leads-analytics" class="leads-subtab" style="display: none;">
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="kpi-l">Unique Companies</div>
+              <div class="kpi-v" style="color: var(--brand-2);">3,753</div>
+              <div class="kpi-d">deduped by domain/name</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-l">Total Locations</div>
+              <div class="kpi-v" style="color: var(--accent);">4,106</div>
+              <div class="kpi-d">city + company combos</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-l">Unique Leads</div>
+              <div class="kpi-v" style="color: var(--success);">2,754</div>
+              <div class="kpi-d">deduped by email</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-l">Total Emails</div>
+              <div class="kpi-v" style="color: var(--brand-2);">2,754</div>
+              <div class="kpi-d">all unique emails</div>
+            </div>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="kpi-l">Leads w/ Phone</div>
+              <div class="kpi-v" style="color: var(--success);">4,662</div>
+              <div class="kpi-d">unique leads</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-l">Leads w/ LinkedIn</div>
+              <div class="kpi-v" style="color: var(--brand-2);">1,304</div>
+              <div class="kpi-d">unique leads</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-l">Companies w/ Phone</div>
+              <div class="kpi-v" style="color: var(--danger);">3,152</div>
+              <div class="kpi-d">unique companies</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-l">Data Completeness</div>
+              <div class="kpi-v" style="color: var(--warn);">47<small>%</small></div>
+              <div class="kpi-d">avg across 11 fields</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <div class="card-head">
+                <span class="card-t-lg">Duplicate Detection</span>
+                <button class="btn sm">Run dedup</button>
+              </div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div>
+                  <div class="kpi-l">Total rows</div>
+                  <div style="font-size: 22px; font-weight: 500;">6,047</div>
+                </div>
+              </div>
+              <div class="rev-split" style="margin-top: 14px;">
+                <div style="background: var(--surface-2); padding: 12px; border-radius: 8px;">
+                  <div class="kpi-l">Email dupes</div>
+                  <div style="font-size: 20px; font-weight: 500; color: var(--brand-2);">3,293</div>
+                  <div class="kpi-d">6,047 → 2,754 unique</div>
+                </div>
+                <div style="background: var(--surface-2); padding: 12px; border-radius: 8px;">
+                  <div class="kpi-l">Company dupes</div>
+                  <div style="font-size: 20px; font-weight: 500; color: var(--brand-2);">2,294</div>
+                  <div class="kpi-d">6,047 → 3,753 unique</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <span class="card-t-lg">Data by Country</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="donut">
+                  <svg width="130" height="130" viewBox="0 0 130 130">
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--surface-2)" stroke-width="18"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--brand-2)" stroke-width="18" stroke-dasharray="238.8 314.2" stroke-dashoffset="0"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--accent)" stroke-width="18" stroke-dasharray="50.3 314.2" stroke-dashoffset="-238.8"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--success)" stroke-width="18" stroke-dasharray="12.5 314.2" stroke-dashoffset="-289.1"/>
+                  </svg>
+                  <div class="donut-ctr">
+                    <div class="donut-ctr-v">6,047</div>
+                    <div class="donut-ctr-l">Rows</div>
+                  </div>
+                </div>
+                <div class="donut-legend" style="flex: 1;">
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--brand-2);"></span>Germany</span><span class="donut-lrow-v">4,518 · 76%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--accent);"></span>United States</span><span class="donut-lrow-v">927 · 16%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--success);"></span>Poland</span><span class="donut-lrow-v">257 · 4%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--warn);"></span>Spain</span><span class="donut-lrow-v">121 · 2%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--danger);"></span>UK</span><span class="donut-lrow-v">29 · 0.5%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--ink-3);"></span>+6 more</span><span class="donut-lrow-v">195</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: GROUPS
+           ============================================================ -->
+      <section class="view" id="view-groups">
+        <header class="page-head">
+          <div>
+            <h1>Groups — <em>saved segments</em> and smart lists</h1>
+            <div class="page-sub">Group leads by any combination of industry, geo, stage, or custom criteria.</div>
+          </div>
+          <button class="btn primary">+ New Group</button>
+        </header>
+
+        <div class="placeholder-grid">
+          <div class="feat-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h4>Dentists Poland</h4>
+              <span class="int-status on">Active</span>
+            </div>
+            <p>Dental practices across Poland · 257 leads · Reply rate 8.1%</p>
+            <div style="margin-top: 10px; display: flex; gap: 6px;">
+              <button class="btn sm">View</button>
+              <button class="btn sm">Campaign</button>
+            </div>
+          </div>
+          <div class="feat-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h4>Derm Germany</h4>
+              <span class="int-status on">Active</span>
+            </div>
+            <p>Dermatology clinics in Germany · 4,518 leads · Reply rate 6.1%</p>
+            <div style="margin-top: 10px; display: flex; gap: 6px;">
+              <button class="btn sm">View</button>
+              <button class="btn sm">Campaign</button>
+            </div>
+          </div>
+          <div class="feat-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h4>Medspa Spain</h4>
+              <span class="int-status on">Active</span>
+            </div>
+            <p>Medspas across Spain · 121 leads · Reply rate 4.0%</p>
+            <div style="margin-top: 10px; display: flex; gap: 6px;">
+              <button class="btn sm">View</button>
+              <button class="btn sm">Campaign</button>
+            </div>
+          </div>
+          <div class="feat-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h4>US Derm · test</h4>
+              <span class="int-status warn">Paused</span>
+            </div>
+            <p>US dermatology · 927 leads · Reply rate 1.8% — underperforming</p>
+            <div style="margin-top: 10px; display: flex; gap: 6px;">
+              <button class="btn sm">View</button>
+              <button class="btn sm">Archive</button>
+            </div>
+          </div>
+          <div class="feat-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h4>Hot leads · last 7d</h4>
+              <span class="int-status on">Smart</span>
+            </div>
+            <p>Auto-updating: opened 3+ times, no reply in 48h · 18 leads</p>
+            <div style="margin-top: 10px; display: flex; gap: 6px;">
+              <button class="btn sm">View</button>
+              <button class="btn sm">Edit rules</button>
+            </div>
+          </div>
+          <div class="feat-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h4>Meeting-ready</h4>
+              <span class="int-status on">Smart</span>
+            </div>
+            <p>Auto: positive reply sentiment · 12 leads ready to book</p>
+            <div style="margin-top: 10px; display: flex; gap: 6px;">
+              <button class="btn sm">View</button>
+              <button class="btn sm">Edit rules</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: UNIFIED INBOX
+           ============================================================ -->
+      <section class="view" id="view-inbox">
+        <header class="page-head">
+          <div>
+            <h1>Unified Inbox — <em>one thread per lead</em>, not per channel</h1>
+            <div class="page-sub">Email, WhatsApp, LinkedIn, and AI call transcripts stitched chronologically.</div>
+          </div>
+        </header>
+
+        <div class="inbox-grid">
+          <div class="inbox-panel">
+            <div class="inbox-filters">
+              <button class="chip active">All · 47</button>
+              <button class="chip">Needs reply · 5</button>
+              <button class="chip">Hot · 3</button>
+              <button class="chip">Email</button>
+              <button class="chip">WA</button>
+              <button class="chip">LinkedIn</button>
+            </div>
+            <div class="inbox-scroll">
+              <div class="inbox-row selected">
+                <div class="ib-avatar">MM</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">Marisa Munoz</span><span class="ib-time">12m</span></div>
+                  <div class="ib-preview">Re: AI intake for derm — interested, pricing?</div>
+                  <span class="ib-chan email">Email · Instantly</span>
+                </div>
+              </div>
+              <div class="inbox-row">
+                <div class="ib-avatar">PK</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">Dr. Kowalski</span><span class="ib-time">1h</span></div>
+                  <div class="ib-preview">Confirmed 3:30 PM today 👍</div>
+                  <span class="ib-chan wa">WhatsApp</span>
+                </div>
+              </div>
+              <div class="inbox-row">
+                <div class="ib-avatar">JA</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">Javier Alonso</span><span class="ib-time">3h</span></div>
+                  <div class="ib-preview">Accepted connection — happy to chat about automation</div>
+                  <span class="ib-chan li">LinkedIn</span>
+                </div>
+              </div>
+              <div class="inbox-row">
+                <div class="ib-avatar">GM</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">Gameday · AI transcript</span><span class="ib-time">1d</span></div>
+                  <div class="ib-preview">Next: send contract. Sentiment 0.82 positive</div>
+                  <span class="ib-chan call">Voice call</span>
+                </div>
+              </div>
+              <div class="inbox-row">
+                <div class="ib-avatar">HM</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">Hans Mueller</span><span class="ib-time">1d</span></div>
+                  <div class="ib-preview">Re: Dermatologie AI — Danke, erzählen Sie mir mehr...</div>
+                  <span class="ib-chan email">Email · Smartlead</span>
+                </div>
+              </div>
+              <div class="inbox-row">
+                <div class="ib-avatar">AM</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">Advanced MedAesthetic</span><span class="ib-time">2d</span></div>
+                  <div class="ib-preview">Opened your email 7 times — no reply yet</div>
+                  <span class="ib-chan email">Email · Instantly</span>
+                </div>
+              </div>
+              <div class="inbox-row">
+                <div class="ib-avatar">DB</div>
+                <div style="min-width: 0;">
+                  <div class="ib-top"><span class="ib-name">DermaClinik Berlin</span><span class="ib-time">2d</span></div>
+                  <div class="ib-preview">Can we schedule contract signing call?</div>
+                  <span class="ib-chan wa">WhatsApp</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="thread-panel">
+            <div class="thread-head">
+              <div>
+                <div class="thread-lead">Marisa Munoz</div>
+                <div class="thread-lead-meta">BERMAN SKIN INSTITUTE · 3 locations · LA, Baldwin Park, Pasadena</div>
+              </div>
+              <div style="display: flex; gap: 7px;">
+                <button class="btn sm">View lead</button>
+                <button class="btn sm primary">Log call</button>
+              </div>
+            </div>
+            <div class="thread-body">
+              <div class="msg msg-out">
+                Hi Marisa — saw you run 3 BERMAN SKIN locations across LA. Quick question: how do you handle after-hours patient intake right now?
+                <div class="msg-meta">Mon 10:14 · Instantly · sent</div>
+              </div>
+              <div class="msg msg-in">
+                Interesting question. Honestly it's a mess — front desk triages voicemails the next morning and we lose bookings.
+                <div class="msg-meta">Thu 4:21 PM · opened 2× before replying</div>
+              </div>
+              <div class="msg msg-out">
+                That's exactly what our AI intake agent fixes. It answers 24/7, qualifies by insurance + concern, and books directly into your calendar. Averaging 34% more booked consultations for our derm clients. Want me to show you a 4-min loom?
+                <div class="msg-meta">Thu 5:08 PM · Instantly · sent</div>
+              </div>
+              <div class="msg msg-in">
+                Interested — can you send pricing for 3 locations? We'd probably start with one as a pilot.
+                <div class="msg-meta">12 min ago · sentiment 0.74 positive</div>
+              </div>
+            </div>
+            <div class="thread-reply">
+              <div class="reply-channels">
+                <button class="chip active">Email · Instantly</button>
+                <button class="chip">WhatsApp</button>
+                <button class="chip">Call</button>
+              </div>
+              <textarea class="reply-box" placeholder="Reply to Marisa…">Hi Marisa — absolutely. For BERMAN SKIN's setup, I'd recommend our Multi-Location Pilot plan: one clinic at $1,200/mo for 60 days, then scale to 3 at $2,400/mo. Includes 24/7 intake, Spanish + English, and direct EHR handoff. Happy to walk through on a 15-min call — would Wednesday 3pm work?</textarea>
+              <div class="reply-actions">
+                <span class="ai-hint">✨ AI-drafted · tone: confident, specific, one clear CTA</span>
+                <div style="display: flex; gap: 7px;">
+                  <button class="btn sm">Regenerate</button>
+                  <button class="btn sm primary" onclick="toast('Reply sent via Instantly','To Marisa @ Berman Skin Institute')">Send →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 14px;">
+          <div class="card-head">
+            <div class="card-t-lg">💬 Objection Handler Library — proven replies to common pushbacks</div>
+            <span class="card-t">AI-scored · tap to insert into draft</span>
+          </div>
+          <div style="font-size: 11.5px; color: var(--ink-3); line-height: 1.55;">
+            When a lead pushes back, your best reply is often one you've already written. This library learns from every closed deal — and gets smarter each time.
+          </div>
+          <div class="obj-grid">
+            <div class="obj-card" onclick="toast('Objection reply inserted','Paste into draft · edit before sending')">
+              <div class="obj-head">
+                <span class="obj-type">Price</span>
+                <span class="obj-stat">used 14× · 64% recovered</span>
+              </div>
+              <div class="obj-quote">"That's more than we budgeted — can you come down on price?"</div>
+              <div class="obj-reply">Totally fair. The €1,200/mo is actually our 1-location plan. Most clinics we work with start there, see the booking lift in 30 days, and roll out to other locations once the ROI is obvious. Want me to send a 60-day pilot quote instead? <b>→ 64% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','Timing pushback template')">
+              <div class="obj-head">
+                <span class="obj-type">Timing</span>
+                <span class="obj-stat">used 22× · 48% recovered</span>
+              </div>
+              <div class="obj-quote">"Bad timing right now, circle back in Q3?"</div>
+              <div class="obj-reply">Makes sense. Quick thought though — Q3 is exactly when {clinic} gets the summer rush, so if we set up now, you'd go into peak season with intake handled. Worth a 15-min look before I put you on the calendar for August? <b>→ 48% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','Decision-maker template')">
+              <div class="obj-head">
+                <span class="obj-type">Decision</span>
+                <span class="obj-stat">used 9× · 71% recovered</span>
+              </div>
+              <div class="obj-quote">"I'd need to check with the doctor/owner first."</div>
+              <div class="obj-reply">Absolutely. To save you a meeting, I can send over a 2-min Loom that shows Dr. {LastName} exactly what their inbox would look like. Most owners say yes after watching that. Want me to send it? <b>→ 71% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','Competitor template')">
+              <div class="obj-head">
+                <span class="obj-type">Competitor</span>
+                <span class="obj-stat">used 7× · 52% recovered</span>
+              </div>
+              <div class="obj-quote">"We already use Kenect/Weave/Birdeye."</div>
+              <div class="obj-reply">Good — those handle reviews and reminders well. The gap we fill is the 24/7 intake call + EHR booking, which most CRMs don't touch. You'd keep what you have and add the one piece that books patients at 11pm. Worth 10 min? <b>→ 52% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','DIY/in-house template')">
+              <div class="obj-head">
+                <span class="obj-type">DIY</span>
+                <span class="obj-stat">used 6× · 58% recovered</span>
+              </div>
+              <div class="obj-quote">"We have someone in-house who can build this."</div>
+              <div class="obj-reply">That's great — seriously. Most clinics who tried building in-house came to us 4-6 months later because it took longer than expected. If your team does build it, you'll know exactly what to ask for. If timeline slips, we'd be here. Want me to send our architecture doc so they don't start from scratch? <b>→ 58% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','Trust/proof template')">
+              <div class="obj-head">
+                <span class="obj-type">Trust</span>
+                <span class="obj-stat">used 11× · 67% recovered</span>
+              </div>
+              <div class="obj-quote">"How do I know this will actually work for us?"</div>
+              <div class="obj-reply">Fair question. Two options: (1) I can intro you to Dr. Alvarez in Poland — same specialty, started 4 months ago, his bookings are up 34%. (2) 60-day pilot, cancel anytime if metrics don't hit. Which would help you decide faster? <b>→ 67% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','Complexity template')">
+              <div class="obj-head">
+                <span class="obj-type">Complexity</span>
+                <span class="obj-stat">used 8× · 55% recovered</span>
+              </div>
+              <div class="obj-quote">"Sounds complicated — will my team actually use it?"</div>
+              <div class="obj-reply">The team does nothing new. Patient calls → our AI picks up → appointments land in your existing calendar. Your front desk sees them in the morning, same flow as always. The only training is a 10-min walkthrough on the dashboard. Happy to show you live? <b>→ 55% reply rate</b></div>
+            </div>
+
+            <div class="obj-card" onclick="toast('Objection reply inserted','Not interested template')">
+              <div class="obj-head">
+                <span class="obj-type">Hard No</span>
+                <span class="obj-stat">used 19× · 23% recovered</span>
+              </div>
+              <div class="obj-quote">"Not interested, please remove me."</div>
+              <div class="obj-reply">Totally respect it, unsubscribing now. Quick ask — was it the pitch, the timing, or just not your priority? Helps me not waste other clinics' time. Either way, thanks for the honest reply. <b>→ 23% reply rate · keeps the door open</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="view-email">
+        <header class="page-head">
+          <div>
+            <h1>Email — <em>multi-channel</em> analytics & inbox management</h1>
+            <div class="page-sub">Instantly.ai · ConvertKit · Lemlist · Smartlead — unified under one view.</div>
+          </div>
+        </header>
+
+        <div class="esp-tabs">
+          <button class="esp-tab active" data-esp="overview">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5"/><rect x="9" y="2" width="5" height="5"/><rect x="2" y="9" width="5" height="5"/><rect x="9" y="9" width="5" height="5"/></svg>
+            Overview
+          </button>
+          <button class="esp-tab" data-esp="instantly">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l-3 7h3l-1 7 5-9H9l2-5z" fill="currentColor"/></svg>
+            Instantly.ai
+          </button>
+          <button class="esp-tab" data-esp="convertkit">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9"/><path d="M3 5l5 4 5-4"/></svg>
+            ConvertKit
+          </button>
+          <button class="esp-tab" data-esp="lemlist">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5 8h6"/></svg>
+            Lemlist
+          </button>
+          <button class="esp-tab" data-esp="smartlead">
+            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l3-6 3 3 4-7"/></svg>
+            Smartlead
+          </button>
+        </div>
+
+        <!-- Overview ESP tab -->
+        <div id="esp-overview" class="esp-subtab">
+          <div class="kpi-grid">
+            <div class="kpi-pill">
+              <div class="kpi-icn sent">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l12-6-4 14-2.5-5.5L2 8z"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Emails Sent</div>
+                <div class="kpi-v">3,847</div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn open">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8s2-5 6-5 6 5 6 5-2 5-6 5-6-5-6-5z"/><circle cx="8" cy="8" r="2"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Open Rate</div>
+                <div class="kpi-v">38.2<small>%</small></div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn reply">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4L2 8l4 4M2 8h10a3 3 0 0 1 3 3v1"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Reply Rate</div>
+                <div class="kpi-v">4.8<small>%</small></div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn bounce">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M2 13h12"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Bounce Rate</div>
+                <div class="kpi-v">2.8<small>%</small></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 14px;">
+            <div class="card-head">
+              <div class="card-t-lg">By campaign</div>
+              <button class="btn sm">Manage</button>
+            </div>
+            <div class="camp-row">
+              <div class="camp-name">Poland dental · V3<small>Instantly · 842 sent</small></div>
+              <div class="bar-track"><div class="bar-fill bar-g" style="width: 72%;"></div></div>
+              <div class="camp-pct good">7.1%</div>
+            </div>
+            <div class="camp-row">
+              <div class="camp-name">Germany derm · V2<small>Smartlead · 1,204 sent</small></div>
+              <div class="bar-track"><div class="bar-fill bar-g" style="width: 58%;"></div></div>
+              <div class="camp-pct good">5.6%</div>
+            </div>
+            <div class="camp-row">
+              <div class="camp-name">India clinic · pilot<small>Instantly · 452 sent</small></div>
+              <div class="bar-track"><div class="bar-fill bar-m" style="width: 45%;"></div></div>
+              <div class="camp-pct">4.4%</div>
+            </div>
+            <div class="camp-row">
+              <div class="camp-name">Spain medspa · V1<small>Lemlist · 687 sent</small></div>
+              <div class="bar-track"><div class="bar-fill bar-m" style="width: 38%;"></div></div>
+              <div class="camp-pct">3.7%</div>
+            </div>
+            <div class="camp-row">
+              <div class="camp-name">US derm · cold test<small>Smartlead · 662 sent · <span style="color: var(--danger);">kill?</span></small></div>
+              <div class="bar-track"><div class="bar-fill bar-b" style="width: 14%;"></div></div>
+              <div class="camp-pct bad">1.3%</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <div class="card-head">
+                <div class="card-t-lg">Top subject lines</div>
+                <span class="card-t">by open rate</span>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 60px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--ink-2);">"Quick question about {clinic}"</div>
+                <div class="camp-pct good">52%</div>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 60px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--ink-2);">"Saw your reviews — had an idea"</div>
+                <div class="camp-pct good">47%</div>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 60px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--ink-2);">"3 Warsaw derm clinics said yes"</div>
+                <div class="camp-pct good">44%</div>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 60px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--ink-2);">"{FirstName}, 90 sec ask"</div>
+                <div class="camp-pct good">41%</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div class="card-t-lg">Inbox health</div>
+                <span class="card-t">reputation 0–100°</span>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 20px 80px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px;">komal@alainza.com</div>
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--ink-3); text-align: right;">98°</div>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 20px 80px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px;">team@alainzabizz.co</div>
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--ink-3); text-align: right;">94°</div>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 20px 80px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px;">hello@getalainza.io</div>
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--warn);"></div>
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--warn); text-align: right;">78° warm</div>
+              </div>
+              <div class="camp-row" style="grid-template-columns: 1fr 20px 80px;">
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11.5px;">k.alainza@outreach.co</div>
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--danger);"></div>
+                <div style="font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--danger); text-align: right;">52° pause</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instantly ESP tab -->
+        <div id="esp-instantly" class="esp-subtab" style="display: none;">
+          <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 14px;">
+            <div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--ink-3);">
+              ● Last synced: Never | Range: 2026-03-20 → 2026-04-19
+            </div>
+            <button class="btn sm" style="margin-left: auto;">Sync now</button>
+          </div>
+          <div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
+            <div class="kpi-pill">
+              <div class="kpi-icn sent">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l12-6-4 14-2.5-5.5L2 8z"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Sent</div>
+                <div class="kpi-v">920</div>
+                <div class="kpi-d">834 contacted</div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn open">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8s2-5 6-5 6 5 6 5-2 5-6 5-6-5-6-5z"/><circle cx="8" cy="8" r="2"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Opens · 26.6%</div>
+                <div class="kpi-v">245</div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn reply">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4L2 8l4 4"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Replies · 0.2%</div>
+                <div class="kpi-v">2</div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn click">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l4 6h-3l2 4-6-4 3-1z"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Clicks · 0%</div>
+                <div class="kpi-v">0</div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn bounce">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Bounced · 2.8%</div>
+                <div class="kpi-v">26</div>
+              </div>
+            </div>
+            <div class="kpi-pill">
+              <div class="kpi-icn unsub">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-3 2.5-4 5-4s5 1 5 4M10 3l4 4M14 3l-4 4"/></svg>
+              </div>
+              <div>
+                <div class="kpi-l">Unsub · 0%</div>
+                <div class="kpi-v">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 14px;">
+            <div class="card-head">
+              <div class="card-t-lg">Daily Email Activity · 30 days</div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-bars" id="emailChart"></div>
+            </div>
+            <div class="chart-legend">
+              <span><span class="legend-sw" style="background: var(--brand-2);"></span>Sent</span>
+              <span><span class="legend-sw" style="background: var(--success);"></span>Opened</span>
+              <span><span class="legend-sw" style="background: var(--accent);"></span>Replies</span>
+              <span><span class="legend-sw" style="background: var(--danger);"></span>Bounced</span>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <div class="card-head">
+                <div class="card-t-lg">Lead Interest Breakdown</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="donut">
+                  <svg width="130" height="130" viewBox="0 0 130 130">
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--surface-2)" stroke-width="18"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--brand-2)" stroke-width="18" stroke-dasharray="306 314.2" stroke-dashoffset="0"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--warn)" stroke-width="18" stroke-dasharray="2.4 314.2" stroke-dashoffset="-306"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--danger)" stroke-width="18" stroke-dasharray="0.8 314.2" stroke-dashoffset="-308.4"/>
+                  </svg>
+                  <div class="donut-ctr">
+                    <div class="donut-ctr-v">765</div>
+                    <div class="donut-ctr-l">Leads</div>
+                  </div>
+                </div>
+                <div class="donut-legend" style="flex: 1;">
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--brand-2);"></span>Lead</span><span class="donut-lrow-v">755</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--warn);"></span>Out of office</span><span class="donut-lrow-v">6</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--danger);"></span>Not interested</span><span class="donut-lrow-v">2</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--accent);"></span>Wrong person</span><span class="donut-lrow-v">2</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div class="card-t-lg">Leads by Country</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="donut">
+                  <svg width="130" height="130" viewBox="0 0 130 130">
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--surface-2)" stroke-width="18"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--brand-2)" stroke-width="18" stroke-dasharray="180 314.2" stroke-dashoffset="0"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--accent)" stroke-width="18" stroke-dasharray="70 314.2" stroke-dashoffset="-180"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--success)" stroke-width="18" stroke-dasharray="40 314.2" stroke-dashoffset="-250"/>
+                    <circle cx="65" cy="65" r="50" fill="none" stroke="var(--warn)" stroke-width="18" stroke-dasharray="24 314.2" stroke-dashoffset="-290"/>
+                  </svg>
+                  <div class="donut-ctr">
+                    <div class="donut-ctr-v">920</div>
+                    <div class="donut-ctr-l">Sent</div>
+                  </div>
+                </div>
+                <div class="donut-legend" style="flex: 1;">
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--brand-2);"></span>Germany</span><span class="donut-lrow-v">542 · 59%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--accent);"></span>Poland</span><span class="donut-lrow-v">203 · 22%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--success);"></span>Spain</span><span class="donut-lrow-v">116 · 13%</span></div>
+                  <div class="donut-lrow"><span class="donut-lrow-l"><span class="legend-sw" style="background: var(--warn);"></span>India</span><span class="donut-lrow-v">59 · 6%</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other ESP tabs (stub) -->
+        <div id="esp-convertkit" class="esp-subtab" style="display: none;">
+          <div class="feat-card"><h4>ConvertKit · newsletter + lead magnet</h4><p>1,247 subscribers · 38.2% open rate · 4.1% click rate. Data view mirrors Instantly with ConvertKit-native metrics (tags, sequences, form performance).</p></div>
+        </div>
+        <div id="esp-lemlist" class="esp-subtab" style="display: none;">
+          <div class="feat-card"><h4>Lemlist · Spain medspa nurture</h4><p>687 sent · 41% open · 3.7% reply. Manual approval on drafts before send — perfect for nurture sequences.</p></div>
+        </div>
+        <div id="esp-smartlead" class="esp-subtab" style="display: none;">
+          <div class="feat-card"><h4>Smartlead · Germany campaign rotation</h4><p>1,204 sent across 2 mailboxes · 58% open · 5.6% reply. Auto-warmup active.</p></div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: CALLS
+           ============================================================ -->
+      <section class="view" id="view-calls">
+        <header class="page-head">
+          <div>
+            <h1>Calls — <em>AI voice</em> + manual logs</h1>
+            <div class="page-sub">Retell AI handles inbound qualification and outbound follow-ups. All transcripts + sentiment synced.</div>
+          </div>
+          <button class="btn primary">+ New Call</button>
+        </header>
+
+        <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi">
+            <div class="kpi-l">This month</div>
+            <div class="kpi-v">42</div>
+            <div class="kpi-d">calls completed</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-l">Avg duration</div>
+            <div class="kpi-v">8:24</div>
+            <div class="kpi-d">healthy range</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-l">Sentiment · avg</div>
+            <div class="kpi-v up" style="color: var(--success);">+0.67</div>
+            <div class="kpi-d up">positive</div>
+          </div>
+        </div>
+
+        <div class="calls-table">
+          <div class="call-row" style="background: var(--surface-2); font-family: 'Geist Mono', monospace; font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.04em;">
+            <span></span>
+            <span>Lead</span>
+            <span>Outcome</span>
+            <span>Duration</span>
+            <span>Sentiment</span>
+            <span>Status</span>
+          </div>
+          <div class="call-row">
+            <div class="call-dir out">↗</div>
+            <div class="dt-company">Gameday Men's Health<small>Albuquerque · AI call</small></div>
+            <div style="color: var(--ink-2);">Ready to sign contract</div>
+            <div style="font-family: 'Geist Mono', monospace; color: var(--ink-2);">12:34</div>
+            <div style="color: var(--success); font-family: 'Geist Mono', monospace;">+0.82</div>
+            <div><span class="call-status done">Done</span></div>
+          </div>
+          <div class="call-row">
+            <div class="call-dir in">↘</div>
+            <div class="dt-company">Dr. Petra Kowalski<small>Warsaw · inbound</small></div>
+            <div style="color: var(--ink-2);">Booked discovery meeting</div>
+            <div style="font-family: 'Geist Mono', monospace; color: var(--ink-2);">3:12</div>
+            <div style="color: var(--success); font-family: 'Geist Mono', monospace;">+0.71</div>
+            <div><span class="call-status done">Done</span></div>
+          </div>
+          <div class="call-row">
+            <div class="call-dir out">↗</div>
+            <div class="dt-company">SEV Laser<small>Los Angeles</small></div>
+            <div style="color: var(--ink-2);">Follow-up scheduled</div>
+            <div style="font-family: 'Geist Mono', monospace; color: var(--ink-2);">6:48</div>
+            <div style="color: var(--success); font-family: 'Geist Mono', monospace;">+0.54</div>
+            <div><span class="call-status done">Done</span></div>
+          </div>
+          <div class="call-row">
+            <div class="call-dir out">↗</div>
+            <div class="dt-company">Advanced MedAesthetic<small>Charlotte</small></div>
+            <div style="color: var(--ink-2);">No answer · retry</div>
+            <div style="font-family: 'Geist Mono', monospace; color: var(--ink-2);">0:00</div>
+            <div style="font-family: 'Geist Mono', monospace; color: var(--ink-3);">—</div>
+            <div><span class="call-status missed">Missed</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: WHATSAPP
+           ============================================================ -->
+      <section class="view" id="view-whatsapp">
+        <header class="page-head">
+          <div>
+            <h1>WhatsApp — <em>business API</em> with template library</h1>
+            <div class="page-sub">8 approved templates for follow-ups, meeting reschedules, and pilot offers.</div>
+          </div>
+          <button class="btn primary">+ New Template</button>
+        </header>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-l">Sent · 30d</div><div class="kpi-v">127</div><div class="kpi-d up">↑ 18</div></div>
+          <div class="kpi"><div class="kpi-l">Read rate</div><div class="kpi-v">94<small>%</small></div><div class="kpi-d">healthy</div></div>
+          <div class="kpi"><div class="kpi-l">Reply rate</div><div class="kpi-v">31<small>%</small></div><div class="kpi-d up">6× higher than email</div></div>
+          <div class="kpi"><div class="kpi-l">Templates</div><div class="kpi-v">8</div><div class="kpi-d">all approved</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-t-lg">Template library</div>
+            <span class="card-t">approved by Meta</span>
+          </div>
+          <div class="wa-templates">
+            <div class="wa-tpl">
+              <div class="wa-tpl-name">Meeting reminder · #1</div>
+              <div class="wa-tpl-txt">Hi {{name}}, just a reminder we're meeting at {{time}} today. Here's the link: {{link}}</div>
+            </div>
+            <div class="wa-tpl">
+              <div class="wa-tpl-name">Cold follow-up · #2</div>
+              <div class="wa-tpl-txt">Hi {{name}} — I sent you an email last week about {{topic}}. Worth a quick chat?</div>
+            </div>
+            <div class="wa-tpl">
+              <div class="wa-tpl-name">Pilot offer · #3</div>
+              <div class="wa-tpl-txt">{{name}}, quick pilot offer for {{clinic}} — 60 days, €1,200, one location. Interested?</div>
+            </div>
+            <div class="wa-tpl">
+              <div class="wa-tpl-name">Reschedule · #4</div>
+              <div class="wa-tpl-txt">Sorry we missed each other {{name}}. Grab a new slot here: {{calendar_link}}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: PERFORMANCE
+           ============================================================ -->
+      <section class="view" id="view-performance">
+        <header class="page-head">
+          <div>
+            <h1>Performance — <em>segment breakdown</em> by reply rate & ROI</h1>
+            <div class="page-sub">Where your outreach effort is actually converting. Industry × geo × channel.</div>
+          </div>
+        </header>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-l">Total outreach · 30d</div><div class="kpi-v">3,847</div><div class="kpi-d up">↑ 12%</div></div>
+          <div class="kpi"><div class="kpi-l">Qualified replies</div><div class="kpi-v">184</div><div class="kpi-d up">↑ 27</div></div>
+          <div class="kpi"><div class="kpi-l">Meetings booked</div><div class="kpi-v">18</div><div class="kpi-d up">↑ 5</div></div>
+          <div class="kpi"><div class="kpi-l">Cost per meeting</div><div class="kpi-v">€42</div><div class="kpi-d down">↑ 8%</div></div>
+        </div>
+
+        <div class="card" style="margin-bottom: 14px;">
+          <div class="card-head">
+            <div class="card-t-lg">By segment · industry × geo</div>
+            <span class="card-t">where to double down</span>
+          </div>
+          <div class="camp-row">
+            <div class="camp-name">Dental · Poland<small>🇵🇱 · 1,204 sent · €18 CPM</small></div>
+            <div class="bar-track"><div class="bar-fill bar-g" style="width: 82%;"></div></div>
+            <div class="camp-pct good">8.1%</div>
+          </div>
+          <div class="camp-row">
+            <div class="camp-name">Derm · Germany<small>🇩🇪 · 987 sent · €32 CPM</small></div>
+            <div class="bar-track"><div class="bar-fill bar-g" style="width: 62%;"></div></div>
+            <div class="camp-pct good">6.1%</div>
+          </div>
+          <div class="camp-row">
+            <div class="camp-name">Clinic · India<small>🇮🇳 · 452 sent · €12 CPM</small></div>
+            <div class="bar-track"><div class="bar-fill bar-m" style="width: 48%;"></div></div>
+            <div class="camp-pct">4.7%</div>
+          </div>
+          <div class="camp-row">
+            <div class="camp-name">Medspa · Spain<small>🇪🇸 · 542 sent · €28 CPM</small></div>
+            <div class="bar-track"><div class="bar-fill bar-m" style="width: 41%;"></div></div>
+            <div class="camp-pct">4.0%</div>
+          </div>
+          <div class="camp-row">
+            <div class="camp-name">Derm · US<small>🇺🇸 · 662 sent · €84 CPM · <span style="color: var(--danger);">reduce</span></small></div>
+            <div class="bar-track"><div class="bar-fill bar-b" style="width: 18%;"></div></div>
+            <div class="camp-pct bad">1.8%</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-t-lg">🏆 Winning Patterns — do more of this</div>
+              <span class="card-t">AI-detected · 30d window</span>
+            </div>
+            <div class="pattern-card">
+              <span class="pattern-rank">#1 · strongest</span>
+              <div class="pattern-t">Question-based subject + Tue/Thu 10am + Poland dental</div>
+              <div class="pattern-metric">
+                <span><b>8.4%</b>reply rate</span>
+                <span><b>3.2×</b>vs your avg</span>
+                <span><b>127</b>sent</span>
+                <span><b>11</b>meetings booked</span>
+              </div>
+            </div>
+            <div class="pattern-card">
+              <span class="pattern-rank" style="background: var(--brand);">#2</span>
+              <div class="pattern-t">2-email + 1 WhatsApp combo · Germany derm</div>
+              <div class="pattern-metric">
+                <span><b style="color: var(--brand-2);">6.1%</b>reply rate</span>
+                <span><b style="color: var(--brand-2);">2.4×</b>vs email-only</span>
+                <span><b style="color: var(--brand-2);">342</b>sent</span>
+                <span><b style="color: var(--brand-2);">21</b>meetings</span>
+              </div>
+            </div>
+            <div class="pattern-card">
+              <span class="pattern-rank" style="background: var(--accent);">#3</span>
+              <div class="pattern-t">AI voice call day 5 after email silence</div>
+              <div class="pattern-metric">
+                <span><b style="color: var(--accent);">18%</b>resurrect rate</span>
+                <span><b style="color: var(--accent);">31</b>calls made</span>
+                <span><b style="color: var(--accent);">€42</b>cost per revive</span>
+                <span><b style="color: var(--accent);">6</b>meetings</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-t-lg">⏰ Best Time — when replies come in</div>
+              <span class="card-t">weekday × hour · local to lead</span>
+            </div>
+            <div style="font-size: 11.5px; color: var(--ink-3); margin-bottom: 6px; line-height: 1.5;">
+              Green cells = peak reply hours. Schedule sends 2h before.
+            </div>
+            <div class="bt-heatmap" id="btHeatmap"></div>
+            <div class="bt-hours" id="btHours"></div>
+            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--ink-2); line-height: 1.6;">
+              <div>Peak: <b style="color: var(--success);">Tue 10am</b>, <b style="color: var(--success);">Thu 2pm</b></div>
+              <div>Dead: <b style="color: var(--danger);">Fri 4pm+</b>, <b style="color: var(--danger);">Mon 8am</b></div>
+              <div style="color: var(--ink-3); margin-top: 6px;">Schedule sends 2h earlier than peak reply time</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 14px;">
+          <div class="card-head">
+            <div class="card-t-lg">📧 Subject Line Graveyard — what to reuse, what to bury</div>
+            <span class="card-t">min 100 sends · 30d</span>
+          </div>
+          <div style="padding: 8px 12px; background: var(--success-soft); border-radius: 7px; margin-bottom: 10px; font-size: 11px; color: var(--success); font-family: 'Geist Mono', monospace;">
+            TOP 4 — reuse these in new campaigns
+          </div>
+          <div class="subj-row top">
+            <div class="subj-rank-n">1</div>
+            <div class="subj-text">"Quick question about {clinic}"</div>
+            <div class="subj-sent">412 sent</div>
+            <div class="subj-rate hi">52% open</div>
+            <div><span class="subj-action reuse">Reuse</span></div>
+          </div>
+          <div class="subj-row top">
+            <div class="subj-rank-n">2</div>
+            <div class="subj-text">"Saw your reviews — had an idea"</div>
+            <div class="subj-sent">287 sent</div>
+            <div class="subj-rate hi">47% open</div>
+            <div><span class="subj-action reuse">Reuse</span></div>
+          </div>
+          <div class="subj-row top">
+            <div class="subj-rank-n">3</div>
+            <div class="subj-text">"3 Warsaw derm clinics said yes"</div>
+            <div class="subj-sent">204 sent</div>
+            <div class="subj-rate hi">44% open</div>
+            <div><span class="subj-action reuse">Reuse</span></div>
+          </div>
+          <div class="subj-row top">
+            <div class="subj-rank-n">4</div>
+            <div class="subj-text">"{FirstName}, 90 sec ask"</div>
+            <div class="subj-sent">356 sent</div>
+            <div class="subj-rate hi">41% open</div>
+            <div><span class="subj-action reuse">Reuse</span></div>
+          </div>
+
+          <div style="padding: 8px 12px; background: var(--danger-soft); border-radius: 7px; margin: 18px 0 10px; font-size: 11px; color: var(--danger); font-family: 'Geist Mono', monospace;">
+            BOTTOM 5 — archive these, don't reuse
+          </div>
+          <div class="subj-row bot">
+            <div class="subj-rank-n">—</div>
+            <div class="subj-text">"Boost your clinic's revenue today!!"</div>
+            <div class="subj-sent">148 sent</div>
+            <div class="subj-rate lo">11% open</div>
+            <div><span class="subj-action kill">Kill</span></div>
+          </div>
+          <div class="subj-row bot">
+            <div class="subj-rank-n">—</div>
+            <div class="subj-text">"Transform your dental practice with AI"</div>
+            <div class="subj-sent">203 sent</div>
+            <div class="subj-rate lo">14% open</div>
+            <div><span class="subj-action kill">Kill</span></div>
+          </div>
+          <div class="subj-row bot">
+            <div class="subj-rank-n">—</div>
+            <div class="subj-text">"Introducing Alainza — AI for medical clinics"</div>
+            <div class="subj-sent">172 sent</div>
+            <div class="subj-rate lo">16% open</div>
+            <div><span class="subj-action kill">Kill</span></div>
+          </div>
+          <div class="subj-row bot">
+            <div class="subj-rank-n">—</div>
+            <div class="subj-text">"Don't miss this opportunity, {FirstName}"</div>
+            <div class="subj-sent">128 sent</div>
+            <div class="subj-rate lo">17% open</div>
+            <div><span class="subj-action kill">Kill</span></div>
+          </div>
+          <div class="subj-row bot">
+            <div class="subj-rank-n">—</div>
+            <div class="subj-text">"Special offer for {clinic} — limited time"</div>
+            <div class="subj-sent">114 sent</div>
+            <div class="subj-rate lo">19% open</div>
+            <div><span class="subj-action kill">Kill</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: REVENUE (built from scratch)
+           ============================================================ -->
+      <section class="view" id="view-revenue">
+        <header class="page-head">
+          <div>
+            <h1>Revenue — <em>MRR</em>, setup fees, and forecasts</h1>
+            <div class="page-sub">Live tracker of what's closed, what's projected, and where the money is coming from.</div>
+          </div>
+          <div class="page-chips">
+            <button class="chip">This Month</button>
+            <button class="chip active">Quarter</button>
+            <button class="chip">Year</button>
+          </div>
+        </header>
+
+        <div class="rev-hero">
+          <div class="rev-hero-card">
+            <div class="rev-hero-l">Monthly recurring revenue</div>
+            <div class="rev-hero-v">€4,800<small>/mo</small></div>
+            <div class="rev-hero-sub">6 active clients · avg €800/mo per client</div>
+            <div class="rev-hero-ticks">
+              <div>
+                <div class="rev-tick-l">Setup fees · QTD</div>
+                <div class="rev-tick-v">€14,400</div>
+              </div>
+              <div>
+                <div class="rev-tick-l">Total revenue · QTD</div>
+                <div class="rev-tick-v">€28,800</div>
+              </div>
+              <div>
+                <div class="rev-tick-l">Churn · 90d</div>
+                <div class="rev-tick-v">0%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rev-forecast">
+            <div class="card-head">
+              <div>
+                <div class="card-t">Revenue forecast</div>
+                <div style="font-size: 24px; font-weight: 500; margin-top: 4px;">€62,400<span style="font-size: 14px; color: var(--ink-3);"> · next 6 months</span></div>
+              </div>
+              <span class="card-t">projected</span>
+            </div>
+            <div class="forecast-months">
+              <div style="text-align: center;">
+                <div class="forecast-val">3.2k</div>
+                <div class="forecast-bar past" style="height: 40%;"></div>
+                <div class="forecast-lbl">Feb</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="forecast-val">4.0k</div>
+                <div class="forecast-bar past" style="height: 50%;"></div>
+                <div class="forecast-lbl">Mar</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="forecast-val">4.8k</div>
+                <div class="forecast-bar curr" style="height: 60%;"></div>
+                <div class="forecast-lbl" style="color: var(--brand-2); font-weight: 500;">Apr</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="forecast-val">6.4k</div>
+                <div class="forecast-bar fc" style="height: 80%;"></div>
+                <div class="forecast-lbl">May</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="forecast-val">8.2k</div>
+                <div class="forecast-bar fc" style="height: 100%;"></div>
+                <div class="forecast-lbl">Jun</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="forecast-val">9.6k</div>
+                <div class="forecast-bar fc" style="height: 100%;"></div>
+                <div class="forecast-lbl">Jul</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rev-split">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-t-lg">Recurring clients · MRR</div>
+              <button class="btn sm">Export</button>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Dr. Alvarez Clinic<small>Started Dec 2025 · Poland dental</small></div>
+              <div class="deal-val">€1,200</div>
+              <div><span class="deal-type mrr">MRR</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">● Active</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Klinika Derma Warsaw<small>Started Jan 2026 · Poland derm</small></div>
+              <div class="deal-val">€800</div>
+              <div><span class="deal-type mrr">MRR</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">● Active</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Mueller Praxis Berlin<small>Started Feb 2026 · Germany derm</small></div>
+              <div class="deal-val">€900</div>
+              <div><span class="deal-type mrr">MRR</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">● Active</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Madrid Aesthetics<small>Started Feb 2026 · Spain medspa</small></div>
+              <div class="deal-val">€600</div>
+              <div><span class="deal-type mrr">MRR</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">● Active</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Milan Laser<small>Started Mar 2026 · US multi-location</small></div>
+              <div class="deal-val">€800</div>
+              <div><span class="deal-type mrr">MRR</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">● Active</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Gameday Men's Health<small>Starting Apr 2026 · US wellness</small></div>
+              <div class="deal-val">€800</div>
+              <div><span class="deal-type mrr">MRR</span></div>
+              <div style="color: var(--warn); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">● Onboarding</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-t-lg">Setup fees · one-time</div>
+              <button class="btn sm">Export</button>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Dr. Alvarez Clinic<small>Invoice #001 · paid Dec 2025</small></div>
+              <div class="deal-val">€2,400</div>
+              <div><span class="deal-type setup">Setup</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">Paid</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Klinika Derma Warsaw<small>Invoice #002 · paid Jan 2026</small></div>
+              <div class="deal-val">€1,800</div>
+              <div><span class="deal-type setup">Setup</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">Paid</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Mueller Praxis<small>Invoice #003 · paid Feb 2026</small></div>
+              <div class="deal-val">€2,200</div>
+              <div><span class="deal-type setup">Setup</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">Paid</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Madrid Aesthetics<small>Invoice #004 · paid Feb 2026</small></div>
+              <div class="deal-val">€1,500</div>
+              <div><span class="deal-type setup">Setup</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">Paid</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Milan Laser<small>Invoice #005 · paid Mar 2026</small></div>
+              <div class="deal-val">€4,100</div>
+              <div><span class="deal-type setup">Setup</span></div>
+              <div style="color: var(--success); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">Paid</div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-name">Gameday Men's<small>Invoice #006 · pending</small></div>
+              <div class="deal-val">€2,400</div>
+              <div><span class="deal-type setup">Setup</span></div>
+              <div style="color: var(--warn); font-family: 'Geist Mono', monospace; font-size: 10px; text-align: right;">Pending</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-t-lg">Segment P&L — revenue by vertical</div>
+            <span class="card-t">last 90 days</span>
+          </div>
+          <table class="pnl-table">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th style="text-align: right;">Clients</th>
+                <th style="text-align: right;">Avg deal</th>
+                <th style="text-align: right;">MRR</th>
+                <th style="text-align: right;">Setup fees</th>
+                <th style="text-align: right;">Total revenue</th>
+                <th style="text-align: right;">Margin</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="seg">Poland · dental + derm</td>
+                <td class="num">2</td>
+                <td class="num">€1,000</td>
+                <td class="num">€2,000</td>
+                <td class="num">€4,200</td>
+                <td class="num">€10,200</td>
+                <td class="num pos">+78%</td>
+              </tr>
+              <tr>
+                <td class="seg">Germany · derm</td>
+                <td class="num">1</td>
+                <td class="num">€900</td>
+                <td class="num">€900</td>
+                <td class="num">€2,200</td>
+                <td class="num">€4,900</td>
+                <td class="num pos">+72%</td>
+              </tr>
+              <tr>
+                <td class="seg">Spain · medspa</td>
+                <td class="num">1</td>
+                <td class="num">€600</td>
+                <td class="num">€600</td>
+                <td class="num">€1,500</td>
+                <td class="num">€3,300</td>
+                <td class="num pos">+64%</td>
+              </tr>
+              <tr>
+                <td class="seg">US · multi-location</td>
+                <td class="num">2</td>
+                <td class="num">€800</td>
+                <td class="num">€1,600</td>
+                <td class="num">€6,500</td>
+                <td class="num">€10,900</td>
+                <td class="num pos">+68%</td>
+              </tr>
+              <tr style="font-weight: 500;">
+                <td class="seg" style="color: var(--brand-2);">Total</td>
+                <td class="num">6</td>
+                <td class="num">€800</td>
+                <td class="num">€5,100</td>
+                <td class="num">€14,400</td>
+                <td class="num" style="color: var(--ink);">€29,300</td>
+                <td class="num pos">+71%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: CALENDAR
+           ============================================================ -->
+      <section class="view" id="view-calendar">
+        <header class="page-head">
+          <div>
+            <h1>Calendar — <em>meetings</em>, prep briefs, and follow-ups</h1>
+            <div class="page-sub">Every meeting auto-generates a prep brief 30 min before. Post-call follow-ups drafted automatically.</div>
+          </div>
+          <button class="btn primary">+ New Meeting</button>
+        </header>
+
+        <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi"><div class="kpi-l">Upcoming · 7d</div><div class="kpi-v">6</div></div>
+          <div class="kpi"><div class="kpi-l">Booked · 30d</div><div class="kpi-v">18</div><div class="kpi-d up">↑ 5</div></div>
+          <div class="kpi"><div class="kpi-l">Show-up rate</div><div class="kpi-v">83<small>%</small></div><div class="kpi-d up">healthy</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-t-lg">Upcoming</div>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line);">
+            <div style="width: 70px;">
+              <div style="font-size: 18px; font-weight: 500; color: var(--danger);">Today</div>
+              <div style="font-family: 'Geist Mono', monospace; font-size: 10.5px; color: var(--ink-3);">15:30</div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 500; color: var(--ink);">Dr. Petra Kowalski · Klinika Dermatologia</div>
+              <div style="font-size: 12px; color: var(--ink-3);">Discovery · Warsaw · after-hours intake pain discussed in thread</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn sm">Prep brief</button>
+              <button class="btn sm primary">Join Meet</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line);">
+            <div style="width: 70px;">
+              <div style="font-size: 18px; font-weight: 500;">Mon</div>
+              <div style="font-family: 'Geist Mono', monospace; font-size: 10.5px; color: var(--ink-3);">10:00</div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 500; color: var(--ink);">Milan Laser · pricing walkthrough</div>
+              <div style="font-size: 12px; color: var(--ink-3);">St. Louis · €2,400 setup + €800 MRR proposed</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn sm">Prep</button>
+              <button class="btn sm">Reschedule</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 14px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line);">
+            <div style="width: 70px;">
+              <div style="font-size: 18px; font-weight: 500; color: var(--success);">Wed</div>
+              <div style="font-family: 'Geist Mono', monospace; font-size: 10.5px; color: var(--ink-3);">16:30</div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 500; color: var(--ink);">Gameday Men's Health · onboarding 🎉</div>
+              <div style="font-size: 12px; color: var(--ink-3);">Albuquerque · NEW CLIENT · kickoff + phone system handoff</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn sm">Prep</button>
+              <button class="btn sm primary">Join Meet</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           VIEW: INTEGRATIONS
+           ============================================================ -->
+      <section class="view" id="view-integrations">
+        <header class="page-head">
+          <div>
+            <h1>Integrations — <em>every channel</em> feeds one pipeline</h1>
+            <div class="page-sub">9 of 12 connected. Everything syncs to Supabase, the source of truth.</div>
+          </div>
+        </header>
+
+        <div class="int-grid">
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Instantly.ai</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Primary cold email · 4 mailboxes · 15min sync</div>
+            <div class="int-stat">Last sync: 2m ago · 842 sent today</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Smartlead</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Germany campaign rotation · 2 mailboxes</div>
+            <div class="int-stat">Last sync: 4m ago · 312 sent today</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Lemlist</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Spain medspa nurture · 1 mailbox</div>
+            <div class="int-stat">Last sync: 8m ago · 87 sent today</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">ConvertKit</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Newsletter + lead magnet flows</div>
+            <div class="int-stat">Last sync: 14m ago · 1.2k subs</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">WhatsApp Business</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Cloud API · 8 approved templates</div>
+            <div class="int-stat">Webhook-driven · &lt;5s latency</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Retell · AI Voice</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Auto-qualify + transcribe + sentiment</div>
+            <div class="int-stat">$0.14/min · 42 calls this month</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Google Calendar</span>
+              <span class="int-status on">Connected</span>
+            </div>
+            <div class="int-desc">Two-way sync via Cal.com</div>
+            <div class="int-stat">18 meetings this month</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">LinkedIn Sales Nav</span>
+              <span class="int-status warn">Via Apify</span>
+            </div>
+            <div class="int-desc">Connection requests + DMs · unofficial</div>
+            <div class="int-stat">Rate-limited · 50 actions/day</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Supabase</span>
+              <span class="int-status on">Native</span>
+            </div>
+            <div class="int-desc">Source of truth · all data</div>
+            <div class="int-stat">6,107 leads · 23k touchpoints</div>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Stripe</span>
+              <span class="int-status off">Not connected</span>
+            </div>
+            <div class="int-desc">For invoicing + recurring retainers</div>
+            <button class="btn sm primary" style="margin-top: 6px;" onclick="toast('Connecting Stripe…','OAuth flow opens')">Connect →</button>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">Slack</span>
+              <span class="int-status off">Not connected</span>
+            </div>
+            <div class="int-desc">Real-time reply + positive sentiment alerts</div>
+            <button class="btn sm primary" style="margin-top: 6px;" onclick="toast('Connecting Slack…','Choose workspace')">Connect →</button>
+          </div>
+          <div class="int-card">
+            <div class="int-head">
+              <span class="int-name">HubSpot</span>
+              <span class="int-status off">Export only</span>
+            </div>
+            <div class="int-desc">Client handoff when Alainza Bizz white-labels</div>
+            <button class="btn sm" style="margin-top: 6px;">Configure →</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toast-text">Action completed</span>
+  <small id="toast-sub"></small>
+</div>
+
+<script>
+  // ============================================================
+  // THEME TOGGLE
+  // ============================================================
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  const sunIcon = `<circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/>`;
+  const moonIcon = `<path d="M13 9A5 5 0 1 1 7 3a4 4 0 0 0 6 6z"/>`;
+
+  function applyTheme(mode) {
+    root.setAttribute('data-theme', mode);
+    themeIcon.innerHTML = mode === 'dark' ? sunIcon : moonIcon;
+  }
+
+  themeBtn.addEventListener('click', () => {
+    const curr = root.getAttribute('data-theme');
+    applyTheme(curr === 'dark' ? 'light' : 'dark');
+  });
+  applyTheme('dark');
+
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+  const navItems = document.querySelectorAll('.nav-item');
+  const views = document.querySelectorAll('.view');
+  function switchView(viewId) {
+    navItems.forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
+    views.forEach(v => v.classList.toggle('active', v.id === 'view-' + viewId));
+    document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    if (viewId === 'email') setTimeout(animateEspBars, 100);
+    if (viewId === 'performance') {
+      setTimeout(() => animateBars('view-performance'), 100);
+      setTimeout(renderBtHeatmap, 150);
+    }
+  }
+  navItems.forEach(item => {
+    item.addEventListener('click', () => switchView(item.dataset.view));
+  });
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+  }
+
+  // ============================================================
+  // HEATMAP
+  // ============================================================
+  const hm = document.getElementById('heatmap');
+  const data = [18, 22, 15, 28, 31, 24, 19, 33, 27, 20, 31, 18, 23, 14];
+  const max = Math.max(...data);
+  data.forEach((v, i) => {
+    const c = document.createElement('div');
+    c.className = 'hcell' + (i === data.length - 1 ? ' today' : '');
+    const a = (0.15 + (v / max) * 0.85).toFixed(2);
+    c.style.background = `rgba(96, 165, 250, ${a})`;
+    c.title = v + ' touchpoints';
+    hm.appendChild(c);
+  });
+
+  // ============================================================
+  // STREAK GRID — 30 days
+  // ============================================================
+  const sg = document.getElementById('streakGrid');
+  if (sg) {
+    // 0 = skip, 1-4 = activity level
+    const streak = [2,3,4,3,2,0,2,3,4,4,3,2,3,4,3,2,4,3,3,2,3,4,3,4,3,2,3,4,3,4];
+    streak.forEach((level, i) => {
+      const c = document.createElement('div');
+      if (level === 0) c.className = 'streak-cell skip';
+      else c.className = 'streak-cell l' + level;
+      const n = ['None','Light','Medium','Heavy','Intense'][level];
+      c.title = `Day ${i+1}: ${n} activity`;
+      sg.appendChild(c);
+    });
+  }
+
+  // Animate goal bars on load
+  setTimeout(() => {
+    document.querySelectorAll('.goal-fill').forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0%';
+      setTimeout(() => b.style.width = w, 80);
+    });
+  }, 200);
+
+  // ============================================================
+  // BEST TIME HEATMAP — 7 days × 24 hours
+  // ============================================================
+  function renderBtHeatmap() {
+    const bt = document.getElementById('btHeatmap');
+    const bh = document.getElementById('btHours');
+    if (!bt || bt.children.length) return;
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    // Reply heatmap: rows = days, cols = hours 0-23
+    // Simulate peak in Tue 10, Thu 14, etc
+    const peaks = {'1-10': 1, '3-14': 1, '1-11': 0.9, '3-15': 0.85, '0-9': 0.6, '2-13': 0.7, '4-10': 0.5};
+    days.forEach((d, di) => {
+      const lbl = document.createElement('div');
+      lbl.className = 'bt-lbl';
+      lbl.textContent = d;
+      bt.appendChild(lbl);
+      for (let h = 0; h < 24; h++) {
+        const c = document.createElement('div');
+        c.className = 'bt-cell';
+        // Calculate intensity
+        let intensity = 0;
+        if (h >= 9 && h <= 17 && di < 5) intensity = 0.2 + Math.random() * 0.3;
+        if (h >= 9 && h <= 11 && (di === 1 || di === 3)) intensity = 0.7 + Math.random() * 0.3;
+        if (h >= 13 && h <= 15 && di === 3) intensity = 0.6 + Math.random() * 0.4;
+        if (di >= 5) intensity *= 0.3;
+        if (peaks[`${di}-${h}`]) intensity = peaks[`${di}-${h}`];
+        if (intensity > 0.6) c.classList.add('peak');
+        c.style.background = intensity > 0.6 ? 'var(--success)' : `rgba(96, 165, 250, ${intensity.toFixed(2)})`;
+        c.title = `${d} ${h}:00 · ${Math.round(intensity * 20)} replies`;
+        bt.appendChild(c);
+      }
+    });
+    // Hour labels (0, 6, 12, 18)
+    bh.innerHTML = '<div></div>';
+    for (let h = 0; h < 24; h++) {
+      const s = document.createElement('span');
+      s.textContent = (h === 0 || h % 6 === 0) ? h : '';
+      bh.appendChild(s);
+    }
+  }
+
+  // ============================================================
+  // EMAIL CHART
+  // ============================================================
+  function renderEmailChart() {
+    const ec = document.getElementById('emailChart');
+    if (!ec || ec.children.length) return;
+    const sent = [14,58,37,55,40,30,40,98,85,78,70,75,88,60,38,30,30,22,14];
+    const opened = [6,28,15,22,15,14,16,22,18,14,12,20,42,14,10,8,11,6,12];
+    const replied = [0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    const bounced = [2,3,1,3,2,2,1,5,4,3,3,2,3,2,1,1,1,0,1];
+    const maxB = Math.max(...sent);
+    sent.forEach((s, i) => {
+      const day = document.createElement('div');
+      day.className = 'chart-day';
+      const grp = document.createElement('div');
+      grp.className = 'chart-bar-grp';
+      [sent[i], opened[i], replied[i], bounced[i]].forEach((v, j) => {
+        const b = document.createElement('div');
+        b.className = 'chart-bar';
+        b.style.height = (v / maxB * 100) + '%';
+        const colors = ['var(--brand-2)', 'var(--success)', 'var(--accent)', 'var(--danger)'];
+        b.style.background = colors[j];
+        b.title = `${['Sent','Opened','Replies','Bounced'][j]}: ${v}`;
+        grp.appendChild(b);
+      });
+      day.appendChild(grp);
+      const lbl = document.createElement('div');
+      lbl.className = 'chart-label';
+      lbl.textContent = '04-' + String(i + 1).padStart(2, '0');
+      day.appendChild(lbl);
+      ec.appendChild(day);
+    });
+  }
+
+  // ============================================================
+  // LEADS SUB-TABS
+  // ============================================================
+  document.querySelectorAll('.leads-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.leads-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const name = tab.dataset.leadsTab;
+      document.querySelectorAll('.leads-subtab').forEach(s => s.style.display = 'none');
+      document.getElementById('leads-' + name).style.display = 'block';
+    });
+  });
+
+  // ============================================================
+  // ESP SUB-TABS
+  // ============================================================
+  document.querySelectorAll('.esp-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.esp-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const name = tab.dataset.esp;
+      document.querySelectorAll('.esp-subtab').forEach(s => s.style.display = 'none');
+      document.getElementById('esp-' + name).style.display = 'block';
+      if (name === 'instantly') renderEmailChart();
+    });
+  });
+
+  // ============================================================
+  // ANIMATE BARS ON VIEW LOAD
+  // ============================================================
+  function animateEspBars() {
+    const view = document.getElementById('view-email');
+    const bars = view.querySelectorAll('.bar-fill');
+    bars.forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0%';
+      setTimeout(() => b.style.width = w, 50);
+    });
+  }
+  function animateBars(viewId) {
+    const view = document.getElementById(viewId);
+    const bars = view.querySelectorAll('.bar-fill');
+    bars.forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0%';
+      setTimeout(() => b.style.width = w, 50);
+    });
+  }
+
+  // ============================================================
+  // CHIP TOGGLING
+  // ============================================================
+  document.querySelectorAll('.inbox-filters, .reply-channels, .page-chips').forEach(group => {
+    group.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+  });
+
+  // Inbox selection
+  document.querySelectorAll('.inbox-row').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.inbox-row').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+    });
+  });
+
+  // ============================================================
+  // TOAST
+  // ============================================================
+  const toastEl = document.getElementById('toast');
+  const toastText = document.getElementById('toast-text');
+  const toastSub = document.getElementById('toast-sub');
+  let toastTimer;
+  function toast(text, sub = '') {
+    toastText.textContent = text;
+    toastSub.textContent = sub;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800);
+  }
+</script>
+
+</body>
+</html>

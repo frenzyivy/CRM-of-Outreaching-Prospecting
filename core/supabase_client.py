@@ -21,14 +21,23 @@ __all__ = [
     "PIPELINE_STAGES", "STAGE_LABELS",
     "get_client", "get_leads", "get_lead_by_id", "upsert_lead", "get_lead_count",
     "get_company_data", "get_people_data", "get_company_employees",
-    "get_pipeline_view", "set_lead_stage",
+    "get_companies", "get_company_detail",
+    "get_pipeline_leads", "get_pipeline_view", "set_lead_stage",
     "log_activity", "get_activities", "get_today_stats", "get_chart_data",
     "mark_lead_synced", "get_unsynced_leads", "update_email_engagement",
     "get_expenses", "add_expense", "update_expense", "delete_expense",
     "compute_lead_score",
     "get_notifications", "create_notification", "mark_notification_read", "mark_all_notifications_read",
+    "register_user_device", "unregister_user_device",
     "search_leads",
+    "set_lead_email_platform", "bulk_set_email_platform",
     "_normalize_company_name", "_normalize_linkedin", "_normalize_phone", "_build_name_key",
+    # Email module helpers
+    "get_email_accounts", "get_email_account_by_email",
+    "create_email_account", "update_email_account",
+    "get_platform_connections", "upsert_platform_connection", "delete_platform_connection",
+    "upsert_sync_snapshot", "get_today_snapshots",
+    "upsert_analytics_daily", "get_analytics_today",
 ]
 
 _client: Client | None = None
@@ -144,15 +153,22 @@ def get_company_employees(company_name: str) -> list[dict]:
 
 
 def _attach_stage_and_score(row: dict) -> None:
-    """Extract stage from lead_stages join and compute lead score."""
+    """Extract stage from lead_stages join and compute lead score.
+    Also surfaces stage_updated_at so the frontend can compute heat dots
+    (days-since-last-touch) without an extra round-trip."""
     stage_data = row.pop("lead_stages", None)
+    stage_updated_at = None
     if isinstance(stage_data, list) and stage_data:
         row["stage"] = stage_data[0].get("stage", "new")
+        stage_updated_at = stage_data[0].get("updated_at")
     elif isinstance(stage_data, dict):
         row["stage"] = stage_data.get("stage", "new")
+        stage_updated_at = stage_data.get("updated_at")
     else:
         row["stage"] = "new"
     row["stage_label"] = STAGE_LABELS.get(row["stage"], row["stage"])
+    if stage_updated_at is not None:
+        row["stage_updated_at"] = stage_updated_at
     scoring = compute_lead_score(row)
     row["lead_score"] = scoring["score"]
     if not row.get("lead_tier"):
@@ -346,10 +362,43 @@ def get_lead_count(
 # Pipeline stages
 # ---------------------------------------------------------------------------
 
+# Minimal fields needed to render a LeadCard — skips raw_data, notes, social fields, etc.
+_PIPELINE_SELECT = (
+    "id,full_name,first_name,last_name,company_name,industry,"
+    "email,title,created_at,updated_at,last_email_event_at,lead_tier,"
+    "lead_stages(stage,updated_at)"
+)
+
+
+def get_pipeline_leads() -> list[dict]:
+    """Lightweight lead fetch for pipeline view — minimal fields only.
+    Much faster than get_leads() because it skips ~30 heavy fields per row."""
+    db = get_client()
+    PAGE_SIZE = 1000
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        result = (
+            db.table("leads")
+            .select(_PIPELINE_SELECT)
+            .order("created_at", desc=True)
+            .range(offset, offset + PAGE_SIZE - 1)
+            .execute()
+        )
+        batch = result.data or []
+        rows.extend(batch)
+        if len(batch) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
+    for row in rows:
+        _attach_stage_and_score(row)
+    return rows
+
+
 def get_pipeline_view() -> dict:
     """All records grouped by pipeline stage."""
     from collections import defaultdict
-    leads = get_leads()
+    leads = get_pipeline_leads()
     grouped: dict[str, list] = defaultdict(list)
     for lead in leads:
         grouped[lead["stage"]].append(lead)
@@ -411,7 +460,11 @@ def get_today_stats(
     date_from: str | None = None,
     date_to: str | None = None,
 ) -> dict[str, int]:
-    """Activity counts for a date range (defaults to today)."""
+    """Activity counts for a date range (defaults to today).
+
+    Also pulls emails_sent from Instantly.ai so that the dashboard
+    Outreaches card reflects real outreach volume, not just manual logs.
+    """
     db = get_client()
     if not date_from:
         today = date.today().isoformat()
@@ -428,10 +481,27 @@ def get_today_stats(
         t = row.get("activity_type", "")
         stats[t] = stats.get(t, 0) + 1
 
+    # Pull Instantly.ai sent email count for the same date range
+    instantly_emails = 0
+    try:
+        from integrations.esp.instantly import fetch_analytics_overview
+        # Extract just the date portion (YYYY-MM-DD) for the Instantly API
+        sd = date_from[:10] if date_from else None
+        ed = date_to[:10] if date_to else None
+        overview = fetch_analytics_overview(start_date=sd, end_date=ed)
+        if "error" not in overview:
+            instantly_emails = overview.get("emails_sent", 0)
+    except Exception:
+        pass  # Don't let Instantly failure break the dashboard
+
+    manual_emails = stats.get("email", 0)
+    calls = stats.get("call", 0)
+
     return {
-        "emails_today": stats.get("email", 0),
-        "calls_today": stats.get("call", 0),
-        "outreaches_today": stats.get("email", 0) + stats.get("call", 0),
+        "emails_today": manual_emails + instantly_emails,
+        "calls_today": calls,
+        "outreaches_today": manual_emails + instantly_emails + calls,
+        "instantly_emails": instantly_emails,
         "notes_today": stats.get("note", 0),
         "stage_changes_today": stats.get("stage_change", 0),
     }
@@ -521,6 +591,198 @@ def update_email_engagement(
 
     # Also log as an activity
     log_activity(lead["id"], f"email_{event_type}", f"Instantly: {event_type} event recorded")
+
+
+# ---------------------------------------------------------------------------
+# Email module helpers — email_accounts, platform_connections,
+# email_sync_snapshots, email_analytics_daily
+# ---------------------------------------------------------------------------
+
+def get_email_accounts() -> list[dict]:
+    """
+    Return all email accounts with their platform connections joined in.
+    Each account dict includes a 'connections' list.
+    """
+    db = get_client()
+    accounts = db.table("email_accounts").select("*").order("email").execute().data or []
+    if not accounts:
+        return []
+
+    account_ids = [a["id"] for a in accounts]
+    conns = (
+        db.table("platform_connections")
+        .select("*")
+        .in_("email_account_id", account_ids)
+        .eq("is_active", True)
+        .execute()
+        .data or []
+    )
+
+    # Index connections by account id
+    conn_map: dict[str, list] = {}
+    for c in conns:
+        conn_map.setdefault(c["email_account_id"], []).append(c)
+
+    for a in accounts:
+        a["connections"] = conn_map.get(a["id"], [])
+
+    return accounts
+
+
+def get_email_account_by_email(email_str: str) -> dict | None:
+    """Lookup a single email_account row by email address (case-insensitive)."""
+    db = get_client()
+    result = (
+        db.table("email_accounts")
+        .select("*")
+        .ilike("email", email_str.strip().lower())
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None
+
+
+def create_email_account(email: str, global_daily_limit: int, warmup_score: int | None = None) -> dict:
+    """Insert a new email account. Returns the created row."""
+    db = get_client()
+    payload: dict[str, Any] = {
+        "email": email.strip().lower(),
+        "global_daily_limit": global_daily_limit,
+    }
+    if warmup_score is not None:
+        payload["warmup_score"] = warmup_score
+    result = db.table("email_accounts").insert(payload).execute()
+    return result.data[0]
+
+
+def update_email_account(account_id: str, updates: dict) -> dict:
+    """Update fields on an email_account row. Returns the updated row."""
+    db = get_client()
+    result = db.table("email_accounts").update(updates).eq("id", account_id).execute()
+    return result.data[0]
+
+
+def get_platform_connections(email_account_id: str) -> list[dict]:
+    """Return all active platform connections for a given email account."""
+    db = get_client()
+    return (
+        db.table("platform_connections")
+        .select("*")
+        .eq("email_account_id", email_account_id)
+        .eq("is_active", True)
+        .execute()
+        .data or []
+    )
+
+
+def upsert_platform_connection(
+    email_account_id: str,
+    platform: str,
+    allocated_daily_limit: int,
+    platform_account_id: str | None = None,
+) -> dict:
+    """
+    Insert or update a platform_connection row.
+    Uses ON CONFLICT (email_account_id, platform) DO UPDATE.
+    """
+    db = get_client()
+    payload: dict[str, Any] = {
+        "email_account_id": email_account_id,
+        "platform": platform,
+        "allocated_daily_limit": allocated_daily_limit,
+        "is_active": True,
+    }
+    if platform_account_id is not None:
+        payload["platform_account_id"] = platform_account_id
+
+    result = db.table("platform_connections").upsert(
+        payload, on_conflict="email_account_id,platform"
+    ).execute()
+    return result.data[0]
+
+
+def delete_platform_connection(connection_id: str) -> None:
+    """Soft-delete a platform connection by marking it inactive."""
+    db = get_client()
+    db.table("platform_connections").update({"is_active": False}).eq("id", connection_id).execute()
+
+
+def upsert_sync_snapshot(
+    email_account_id: str,
+    platform: str,
+    sync_date: str,          # ISO date string: "2025-04-01"
+    metrics: dict,           # keys: sent, opened, clicked, replied, bounced, unsubscribed
+) -> dict:
+    """
+    Upsert one row in email_sync_snapshots.
+    If a row for (account, platform, date) already exists it is overwritten
+    with the latest numbers from the platform API.
+    """
+    db = get_client()
+    payload: dict[str, Any] = {
+        "email_account_id": email_account_id,
+        "platform": platform,
+        "sync_date": sync_date,
+        "synced_at": datetime.now().isoformat(),
+        "sent": metrics.get("sent", 0),
+        "opened": metrics.get("opened", 0),
+        "clicked": metrics.get("clicked", 0),
+        "replied": metrics.get("replied", 0),
+        "bounced": metrics.get("bounced", 0),
+        "unsubscribed": metrics.get("unsubscribed", 0),
+    }
+    result = db.table("email_sync_snapshots").upsert(
+        payload, on_conflict="email_account_id,platform,sync_date"
+    ).execute()
+    return result.data[0]
+
+
+def get_today_snapshots() -> list[dict]:
+    """Return all email_sync_snapshots rows for today (UTC)."""
+    db = get_client()
+    today = date.today().isoformat()
+    return (
+        db.table("email_sync_snapshots")
+        .select("*")
+        .eq("sync_date", today)
+        .execute()
+        .data or []
+    )
+
+
+def upsert_analytics_daily(
+    email_account_id: str,
+    analytics_date: str,      # ISO date string
+    data: dict,               # keys: total_sent, total_opened, … rates … global_limit, total_allocated, remaining
+) -> dict:
+    """
+    Upsert one row in email_analytics_daily.
+    Called by the sync service after aggregating all platform snapshots.
+    """
+    db = get_client()
+    payload: dict[str, Any] = {
+        "email_account_id": email_account_id,
+        "analytics_date": analytics_date,
+        "computed_at": datetime.now().isoformat(),
+        **data,
+    }
+    result = db.table("email_analytics_daily").upsert(
+        payload, on_conflict="email_account_id,analytics_date"
+    ).execute()
+    return result.data[0]
+
+
+def get_analytics_today() -> list[dict]:
+    """Return all email_analytics_daily rows for today (UTC)."""
+    db = get_client()
+    today = date.today().isoformat()
+    return (
+        db.table("email_analytics_daily")
+        .select("*")
+        .eq("analytics_date", today)
+        .execute()
+        .data or []
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -657,13 +919,59 @@ def get_notifications(unread_only: bool = False, limit: int = 20) -> list[dict]:
 
 
 def create_notification(type: str, title: str, message: str = "", lead_id: str | None = None) -> None:
-    """Insert a notification."""
+    """Insert a notification row AND fan out push (FCM) to registered devices."""
     db = get_client()
     try:
         data: dict = {"type": type, "title": title, "message": message}
         if lead_id:
             data["lead_id"] = lead_id
         db.table("notifications").insert(data).execute()
+    except Exception:
+        pass
+
+    # Fan out to FCM tokens. Never let push failures break the notification.
+    try:
+        from integrations.push.fcm import send_to_tokens, is_configured
+        if not is_configured():
+            return
+        tokens_result = db.table("user_devices").select("fcm_token").execute()
+        tokens = [r.get("fcm_token") for r in (tokens_result.data or []) if r.get("fcm_token")]
+        if tokens:
+            payload = {"type": type}
+            if lead_id:
+                payload["lead_id"] = lead_id
+            dispatch = send_to_tokens(tokens, title, message, payload)
+            # Clean up tokens the FCM service says are invalid.
+            for bad in dispatch.get("invalid_tokens", []):
+                try:
+                    db.table("user_devices").delete().eq("fcm_token", bad).execute()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# User devices (for FCM push)
+# ---------------------------------------------------------------------------
+
+def register_user_device(user_id: str, fcm_token: str, platform: str = "android") -> None:
+    """Upsert a device token for a user. Deduplicates by (user_id, fcm_token)."""
+    db = get_client()
+    try:
+        db.table("user_devices").upsert(
+            {"user_id": user_id, "fcm_token": fcm_token, "platform": platform},
+            on_conflict="user_id,fcm_token",
+        ).execute()
+    except Exception:
+        pass
+
+
+def unregister_user_device(fcm_token: str) -> None:
+    """Remove a device token (e.g. on logout)."""
+    db = get_client()
+    try:
+        db.table("user_devices").delete().eq("fcm_token", fcm_token).execute()
     except Exception:
         pass
 
@@ -684,6 +992,27 @@ def mark_all_notifications_read() -> None:
         db.table("notifications").update({"read": True}).eq("read", False).execute()
     except Exception:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Email Platform Assignment
+# ---------------------------------------------------------------------------
+
+def set_lead_email_platform(lead_id: str, platform: str | None) -> dict:
+    """Assign (or clear) the email_platform field on a single lead."""
+    db = get_client()
+    result = db.table("leads").update({"email_platform": platform}).eq("id", lead_id).execute()
+    return (result.data or [{}])[0]
+
+
+def bulk_set_email_platform(lead_ids: list[str], platform: str | None) -> int:
+    """Assign the email_platform to a list of lead IDs. Returns count updated."""
+    if not lead_ids:
+        return 0
+    db = get_client()
+    # Supabase Python client supports .in_() for filtering
+    result = db.table("leads").update({"email_platform": platform}).in_("id", lead_ids).execute()
+    return len(result.data or [])
 
 
 # ---------------------------------------------------------------------------
@@ -771,3 +1100,387 @@ def _build_name_key(first_name: str = "", last_name: str = "", full_name: str = 
 
 
 # (Company linking functions removed — unified data model, no separate company records)
+
+
+# ---------------------------------------------------------------------------
+# Normalized Companies (post-migration)
+# ---------------------------------------------------------------------------
+
+def get_companies() -> list[dict]:
+    """Return all companies from company_list_view (deduplicated, with counts)."""
+    db = get_client()
+    PAGE_SIZE = 1000
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        result = (
+            db.table("company_list_view")
+            .select("*")
+            .order("name", desc=False)
+            .range(offset, offset + PAGE_SIZE - 1)
+            .execute()
+        )
+        batch = result.data or []
+        rows.extend(batch)
+        if len(batch) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
+    return rows
+
+
+def get_company_detail(company_id: str) -> dict | None:
+    """Return a single company with its locations and contacts (grouped)."""
+    db = get_client()
+
+    # Company base record
+    res = db.table("companies").select("*").eq("id", company_id).single().execute()
+    if not res.data:
+        return None
+    company = res.data
+
+    # Locations
+    loc_res = (
+        db.table("locations")
+        .select("*")
+        .eq("company_id", company_id)
+        .order("city", desc=False)
+        .execute()
+    )
+    locations = loc_res.data or []
+
+    # Contacts for this company
+    ct_res = (
+        db.table("contacts")
+        .select("*")
+        .eq("company_id", company_id)
+        .order("full_name", desc=False)
+        .execute()
+    )
+    contacts = ct_res.data or []
+
+    # Attach contacts to their locations
+    loc_map: dict[str, dict] = {loc["id"]: {**loc, "leads": []} for loc in locations}
+    unattached: list[dict] = []
+    for contact in contacts:
+        loc_id = contact.get("location_id")
+        if loc_id and loc_id in loc_map:
+            loc_map[loc_id]["leads"].append(contact)
+        else:
+            unattached.append(contact)
+
+    company["locations"] = list(loc_map.values())
+    company["leads"] = contacts        # flat list for "All Leads" table
+    company["location_count"] = len(locations)
+    company["lead_count"] = len(contacts)
+    return company
+
+
+# ---------------------------------------------------------------------------
+# Email Module Helpers
+# ---------------------------------------------------------------------------
+
+def get_email_accounts() -> list[dict]:
+    """Return all email accounts with their platform_connections."""
+    db = get_client()
+    accounts = db.table("email_accounts").select("*, platform_connections(*)").order("email").execute()
+    return accounts.data or []
+
+
+def get_email_account_by_email(email_str: str) -> dict | None:
+    """Lookup a single email account by address."""
+    db = get_client()
+    res = db.table("email_accounts").select("*, platform_connections(*)").eq("email", email_str).execute()
+    return res.data[0] if res.data else None
+
+
+def create_email_account(email: str, global_daily_limit: int = 100, warmup_score: int | None = None) -> dict:
+    """Insert a new email account. Raises on duplicate email."""
+    db = get_client()
+    payload: dict = {"email": email, "global_daily_limit": global_daily_limit}
+    if warmup_score is not None:
+        payload["warmup_score"] = warmup_score
+    res = db.table("email_accounts").insert(payload).execute()
+    return res.data[0]
+
+
+def update_email_account(account_id: str, updates: dict) -> dict | None:
+    """Partial update on an email account row."""
+    db = get_client()
+    res = db.table("email_accounts").update(updates).eq("id", account_id).execute()
+    return res.data[0] if res.data else None
+
+
+def get_platform_connections(email_account_id: str) -> list[dict]:
+    """Return all platform_connections for a given account."""
+    db = get_client()
+    res = (
+        db.table("platform_connections")
+        .select("*")
+        .eq("email_account_id", email_account_id)
+        .execute()
+    )
+    return res.data or []
+
+
+def upsert_platform_connection(
+    email_account_id: str,
+    platform: str,
+    allocated_daily_limit: int,
+    platform_account_id: str | None = None,
+    is_active: bool = True,
+) -> dict:
+    """Create or update a platform_connection row (upsert on email_account_id + platform)."""
+    db = get_client()
+    payload = {
+        "email_account_id": email_account_id,
+        "platform": platform,
+        "allocated_daily_limit": allocated_daily_limit,
+        "is_active": is_active,
+    }
+    if platform_account_id is not None:
+        payload["platform_account_id"] = platform_account_id
+    res = db.table("platform_connections").upsert(payload, on_conflict="email_account_id,platform").execute()
+    return res.data[0]
+
+
+def delete_platform_connection(connection_id: str) -> bool:
+    """Delete a single platform_connection by id."""
+    db = get_client()
+    db.table("platform_connections").delete().eq("id", connection_id).execute()
+    return True
+
+
+def upsert_sync_snapshot(
+    email_account_id: str,
+    platform: str,
+    sync_date: str,
+    metrics: dict,
+) -> dict:
+    """Upsert daily snapshot (email_account_id + platform + sync_date unique)."""
+    db = get_client()
+    payload = {
+        "email_account_id": email_account_id,
+        "platform": platform,
+        "sync_date": sync_date,
+        **metrics,
+    }
+    res = (
+        db.table("email_sync_snapshots")
+        .upsert(payload, on_conflict="email_account_id,platform,sync_date")
+        .execute()
+    )
+    return res.data[0]
+
+
+def get_today_snapshots() -> list[dict]:
+    """All email_sync_snapshots for today."""
+    db = get_client()
+    today = date.today().isoformat()
+    res = db.table("email_sync_snapshots").select("*").eq("sync_date", today).execute()
+    return res.data or []
+
+
+def upsert_analytics_daily(email_account_id: str, analytics_date: str, aggregated: dict) -> dict:
+    """Upsert pre-computed daily analytics (email_account_id + analytics_date unique)."""
+    db = get_client()
+    payload = {
+        "email_account_id": email_account_id,
+        "analytics_date": analytics_date,
+        "computed_at": datetime.utcnow().isoformat(),
+        **aggregated,
+    }
+    res = (
+        db.table("email_analytics_daily")
+        .upsert(payload, on_conflict="email_account_id,analytics_date")
+        .execute()
+    )
+    return res.data[0]
+
+
+def get_analytics_today() -> list[dict]:
+    """All email_analytics_daily rows for today."""
+    db = get_client()
+    today = date.today().isoformat()
+    res = (
+        db.table("email_analytics_daily")
+        .select("*, email_accounts(email, global_daily_limit)")
+        .eq("analytics_date", today)
+        .execute()
+    )
+    return res.data or []
+
+
+# ---------------------------------------------------------------------------
+# Sync log helpers
+# ---------------------------------------------------------------------------
+
+def insert_sync_log(record: dict) -> dict:
+    """Insert a new sync log row. Returns the created row with its id."""
+    db = get_client()
+    res = db.table("instantly_sync_log").insert(record).execute()
+    return res.data[0] if res.data else {}
+
+
+def update_sync_log(log_id: str, updates: dict) -> dict:
+    """Update an existing sync log row by id."""
+    db = get_client()
+    res = (
+        db.table("instantly_sync_log")
+        .update(updates)
+        .eq("id", log_id)
+        .execute()
+    )
+    return res.data[0] if res.data else {}
+
+
+def get_sync_logs(limit: int = 20) -> list[dict]:
+    """Return the most recent sync log entries, newest first."""
+    db = get_client()
+    res = (
+        db.table("instantly_sync_log")
+        .select("*")
+        .order("started_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return res.data or []
+
+
+# ---------------------------------------------------------------------------
+# Open Intelligence — email_open_events + email_template_tags helpers
+# ---------------------------------------------------------------------------
+
+COUNTRY_TIMEZONE_MAP: dict[str, str] = {
+    "poland": "Europe/Warsaw",
+    "spain": "Europe/Madrid",
+    "germany": "Europe/Berlin",
+    "france": "Europe/Paris",
+    "italy": "Europe/Rome",
+    "netherlands": "Europe/Amsterdam",
+    "united kingdom": "Europe/London",
+    "uk": "Europe/London",
+    "usa": "America/New_York",
+    "united states": "America/New_York",
+}
+
+
+def _derive_lead_local(event: dict) -> dict:
+    """Derive opened_at_lead_local from lead_country if not already set."""
+    if event.get("opened_at_lead_local"):
+        return event
+    country = (event.get("lead_country") or "").lower().strip()
+    tz_name = COUNTRY_TIMEZONE_MAP.get(country)
+    if not tz_name:
+        return event
+    try:
+        import pytz
+        from datetime import datetime
+        tz = pytz.timezone(tz_name)
+        raw = event["opened_at"]
+        utc_dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        local_dt = utc_dt.astimezone(tz)
+        event = dict(event)
+        event["opened_at_lead_local"] = local_dt.isoformat()
+        event["lead_timezone"] = tz_name
+    except Exception:
+        pass
+    return event
+
+
+def upsert_open_event(event: dict) -> dict:
+    """
+    Upsert a single open event into email_open_events.
+    Derives opened_at_lead_local from lead_country at write time using pytz.
+    Conflict target: (lead_email, campaign_id, step_number, variant_id, opened_at).
+    """
+    db = get_client()
+    event = _derive_lead_local(event)
+    res = (
+        db.table("email_open_events")
+        .upsert(event, on_conflict="lead_email,campaign_id,step_number,variant_id,opened_at")
+        .execute()
+    )
+    return res.data[0] if res.data else {}
+
+
+def get_open_events(
+    date_from: str | None = None,
+    date_to: str | None = None,
+    campaign_id: str | None = None,
+    country: str | None = None,
+    specialty: str | None = None,
+    limit: int = 2000,
+) -> list[dict]:
+    """Query email_open_events with optional filters."""
+    db = get_client()
+    q = db.table("email_open_events").select("*")
+    if date_from:
+        q = q.gte("opened_at", date_from)
+    if date_to:
+        q = q.lte("opened_at", date_to + "T23:59:59Z")
+    if campaign_id:
+        q = q.eq("campaign_id", campaign_id)
+    if country:
+        q = q.ilike("lead_country", country)
+    if specialty:
+        q = q.ilike("lead_specialty", specialty)
+    res = q.order("opened_at", desc=True).limit(limit).execute()
+    return res.data or []
+
+
+def get_template_tags(campaign_id: str | None = None) -> list[dict]:
+    """Return email_template_tags rows, optionally filtered by campaign."""
+    db = get_client()
+    q = db.table("email_template_tags").select("*")
+    if campaign_id:
+        q = q.eq("campaign_id", campaign_id)
+    return q.order("step_number").execute().data or []
+
+
+def upsert_template_tag(tag: dict) -> dict:
+    """Upsert an email_template_tags row. Conflict on (campaign_id, step_number, variant_id)."""
+    db = get_client()
+    res = (
+        db.table("email_template_tags")
+        .upsert(tag, on_conflict="campaign_id,step_number,variant_id")
+        .execute()
+    )
+    return res.data[0] if res.data else {}
+
+
+def update_template_tag(tag_id: str, updates: dict) -> dict:
+    """Update an existing email_template_tags row by id."""
+    db = get_client()
+    res = (
+        db.table("email_template_tags")
+        .update(updates)
+        .eq("id", tag_id)
+        .execute()
+    )
+    return res.data[0] if res.data else {}
+
+
+def delete_template_tag(tag_id: str) -> bool:
+    """Delete an email_template_tags row by id."""
+    get_client().table("email_template_tags").delete().eq("id", tag_id).execute()
+    return True
+
+
+def get_hot_leads(min_reopens: int = 3) -> list[dict]:
+    """
+    Return leads whose open_number >= min_reopens on any single email,
+    indicating high engagement (multiple re-opens).
+    """
+    db = get_client()
+    res = (
+        db.table("email_open_events")
+        .select(
+            "lead_email, campaign_id, campaign_name, step_number, "
+            "variant_id, subject_line, lead_country, lead_specialty, open_number"
+        )
+        .gte("open_number", min_reopens)
+        .order("open_number", desc=True)
+        .limit(100)
+        .execute()
+    )
+    return res.data or []

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { Building2, Database, BarChart3 } from 'lucide-react'
 import Header from '../layout/Header'
 import CompanyTable from './CompanyTable'
@@ -8,8 +8,8 @@ import AnalyticsTab from './AnalyticsTab'
 import LeadDetailDrawer from './LeadDetailDrawer'
 import CompanyDetailDrawer from './CompanyDetailDrawer'
 import { cn } from '../../lib/utils'
-import api from '../../api/client'
-import type { Lead } from '../../types'
+import type { Lead, NormalizedCompany } from '../../types'
+import { useCompanies } from '../../hooks/useCompanies'
 
 const tabs = [
   { key: 'company-data', label: 'Company Data', icon: Building2 },
@@ -20,14 +20,16 @@ const tabs = [
 type TabKey = (typeof tabs)[number]['key']
 
 export default function LeadsPage() {
-  const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<TabKey>('company-data')
+  const [searchParams] = useSearchParams()
+  const initialSearch = searchParams.get('search') ?? ''
+  const [activeTab, setActiveTab] = useState<TabKey>(initialSearch ? 'leads' : 'company-data')
+  const { data: companies } = useCompanies()
 
   // Company selection -> drawer with navigation
-  const [selectedCompany, setSelectedCompany] = useState<Lead | null>(null)
-  const [allCompanies, setAllCompanies] = useState<Lead[]>([])
+  const [selectedCompany, setSelectedCompany] = useState<NormalizedCompany | null>(null)
+  const [allCompanies, setAllCompanies] = useState<NormalizedCompany[]>([])
 
-  const handleSelectCompany = useCallback((company: Lead, filteredCompanies?: Lead[]) => {
+  const handleSelectCompany = useCallback((company: NormalizedCompany, filteredCompanies?: NormalizedCompany[]) => {
     setSelectedCompany(company)
     if (filteredCompanies) setAllCompanies(filteredCompanies)
   }, [])
@@ -65,27 +67,13 @@ export default function LeadsPage() {
   const handleOpenCompanyByName = useCallback((companyName: string) => {
     setSelectedLead(null)
     setActiveTab('company-data')
-
-    const cached = queryClient.getQueryData<Lead[]>(['leads', 'company-view'])
-    if (cached) {
-      const match = cached.find(c => c.company_name?.toLowerCase() === companyName.toLowerCase())
-      if (match) {
-        setSelectedCompany(match)
-        setAllCompanies(cached)
-        return
-      }
+    if (companies) {
+      const match = companies.find(c =>
+        c.name?.toLowerCase() === companyName.toLowerCase()
+      )
+      if (match) setSelectedCompany(match)
     }
-    queryClient.fetchQuery<Lead[]>({
-      queryKey: ['leads', 'company-view'],
-      queryFn: async () => (await api.get('/leads/company-view')).data,
-    }).then((companies) => {
-      const match = companies.find(c => c.company_name?.toLowerCase() === companyName.toLowerCase())
-      if (match) {
-        setSelectedCompany(match)
-        setAllCompanies(companies)
-      }
-    })
-  }, [queryClient])
+  }, [companies])
 
   // Cross-drawer navigation: company drawer -> lead drawer
   const handleOpenLeadById = useCallback((lead: Lead) => {
@@ -122,7 +110,7 @@ export default function LeadsPage() {
         <CompanyTable onSelect={handleSelectCompany} />
       )}
       {activeTab === 'leads' && (
-        <LeadsTable onSelect={handleSelectLead} />
+        <LeadsTable onSelect={handleSelectLead} onSelectCompany={handleOpenCompanyByName} initialSearch={initialSearch} />
       )}
       {activeTab === 'analytics' && (
         <AnalyticsTab />
@@ -131,7 +119,7 @@ export default function LeadsPage() {
       {/* Detail overlays */}
       {selectedCompany && (
         <CompanyDetailDrawer
-          lead={selectedCompany}
+          company={selectedCompany}
           onClose={() => setSelectedCompany(null)}
           onNavigate={handleNavigateCompany}
           onOpenLead={handleOpenLeadById}
