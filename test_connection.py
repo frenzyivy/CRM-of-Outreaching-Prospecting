@@ -4,7 +4,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from tools.supabase_client import get_client, get_lead_count, get_leads
+from core.supabase_client import get_client, get_lead_count, get_leads
 
 try:
     client = get_client()
