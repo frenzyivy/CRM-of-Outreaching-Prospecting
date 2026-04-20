@@ -818,6 +818,27 @@
   color: var(--ink-4);
 }
 
+.alainza .pipe-col-showall {
+  margin-top: 4px;
+  width: 100%;
+  justify-content: center;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  border-style: dashed;
+}
+.alainza .pipe-col-showall:hover { color: var(--ink); }
+
+/* While a card is being dragged, its original DOM node must not intercept
+   pointer / drag events — otherwise the dragover bubbles to the source column
+   and the card visually appears in both columns. */
+.alainza .lead-card.dragging {
+  opacity: 0.35;
+  pointer-events: none;
+  cursor: grabbing;
+}
+
 /* Lead card + heat dot -------------------------------------------------- */
 
 .alainza .lead-card {

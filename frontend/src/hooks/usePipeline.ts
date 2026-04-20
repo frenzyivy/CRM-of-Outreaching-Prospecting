@@ -19,7 +19,16 @@ function moveLead(data: PipelineData, leadId: string, newStage: string): Pipelin
     })
   }
   if (movedLead) {
-    stages[newStage] = [{ ...movedLead, stage: newStage }, ...(stages[newStage] ?? [])]
+    // Optimistic patch MUST update every stage-derived field the UI reads —
+    // otherwise the card visually moves but still carries stale stage_label /
+    // stage_updated_at and the heat dot / stage tag render the old values.
+    const patched: Lead = {
+      ...movedLead,
+      stage: newStage,
+      stage_label: data.stage_labels[newStage] ?? newStage,
+      stage_updated_at: new Date().toISOString(),
+    }
+    stages[newStage] = [patched, ...(stages[newStage] ?? [])]
   }
   const stage_counts: Record<string, number> = {}
   for (const stage of data.stage_order) {

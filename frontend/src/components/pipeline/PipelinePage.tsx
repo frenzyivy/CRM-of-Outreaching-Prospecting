@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import PipelineColumn from './PipelineColumn'
 import LeadDetailModal from '../leads/LeadDetailModal'
@@ -30,6 +30,18 @@ function PipelineBoard({
   const { data: pipeline, isLoading } = usePipeline()
   const { mutate: updateStage } = useUpdateStage()
   const draggingLead = useRef<Lead | null>(null)
+
+  // Stable callbacks so `memo(PipelineColumn)` actually skips re-renders.
+  // Without these, new inline function identities on every render defeat memo.
+  const handleDragStart = useCallback((lead: Lead) => {
+    draggingLead.current = lead
+  }, [])
+  const handleDrop = useCallback((targetStage: string) => {
+    const lead = draggingLead.current
+    if (!lead || lead.stage === targetStage) return
+    updateStage({ leadId: lead.id, stage: targetStage })
+    draggingLead.current = null
+  }, [updateStage])
 
   const filteredStages = useMemo(() => {
     if (!pipeline || !search.trim()) return pipeline?.stages ?? {}
@@ -72,13 +84,8 @@ function PipelineBoard({
           label={pipeline.stage_labels[stage]}
           leads={filteredStages[stage] ?? []}
           onLeadClick={onLeadClick}
-          onDragStart={(lead) => { draggingLead.current = lead }}
-          onDrop={(targetStage) => {
-            const lead = draggingLead.current
-            if (!lead || lead.stage === targetStage) return
-            updateStage({ leadId: lead.id, stage: targetStage })
-            draggingLead.current = null
-          }}
+          onDragStart={handleDragStart}
+          onDrop={handleDrop}
           visibleCompanyFields={visibleCompanyFields}
           visibleLeadFields={visibleLeadFields}
         />

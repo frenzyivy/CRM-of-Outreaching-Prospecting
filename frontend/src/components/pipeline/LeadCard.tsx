@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Building2, User, MapPin, Briefcase, Mail } from 'lucide-react'
 import type { Lead } from '../../types'
 import { isCompanyOnly } from '../../types'
@@ -21,6 +21,19 @@ function LeadCard({ lead, onClick, onDragStart, visibleCompanyFields, visibleLea
                   : heat === 'cool' ? 'cool'
                   : ''
 
+  // Local drag flag so this card can hide itself (pointer-events: none) while
+  // the ghost image is following the cursor. Prevents the original node from
+  // intercepting dragover events meant for the target column.
+  const [isDragging, setIsDragging] = useState(false)
+  function handleDragStart(e: React.DragEvent) {
+    setIsDragging(true)
+    onDragStart?.(e)
+  }
+  function handleDragEnd() {
+    setIsDragging(false)
+  }
+  const cardClass = `lead-card${isDragging ? ' dragging' : ''}`
+
   // ── Company card ──────────────────────────────────────────────────────────
   if (isCompanyOnly(lead)) {
     const c = lead
@@ -31,8 +44,9 @@ function LeadCard({ lead, onClick, onDragStart, visibleCompanyFields, visibleLea
       <div
         draggable
         onClick={onClick}
-        onDragStart={onDragStart}
-        className="lead-card"
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        className={cardClass}
         title={heatLabel(heat)}
       >
         <span className={`lead-card-heat ${heatClass}`} aria-hidden="true" />
@@ -73,8 +87,9 @@ function LeadCard({ lead, onClick, onDragStart, visibleCompanyFields, visibleLea
     <div
       draggable
       onClick={onClick}
-      onDragStart={onDragStart}
-      className="lead-card"
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      className={cardClass}
       title={heatLabel(heat)}
     >
       <span className={`lead-card-heat ${heatClass}`} aria-hidden="true" />

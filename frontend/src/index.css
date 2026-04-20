@@ -33,7 +33,8 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--bg-page);
   color: var(--text-primary);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  /* Intentionally no transition — theme toggle should be instant.
+     Design spec: "color transitions on theme toggle — never use". */
 }
 
 #root {
